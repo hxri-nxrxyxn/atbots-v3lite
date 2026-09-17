@@ -58,3 +58,6 @@ export class BrowserVoice implements Voice {
 		return this.available ? speechSynthesis.getVoices() : [];
 	}
 }
+
+/** Shared synthesiser so session speech and Script Mode announcements don't clash. */
+export const voice = new BrowserVoice();

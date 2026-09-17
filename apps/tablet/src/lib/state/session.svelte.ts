@@ -3,7 +3,7 @@ import type { Expression, RelayServerMessage } from '@atbots/protocol';
 
 import { config } from '../config';
 import { recognizer } from '../speech';
-import { BrowserVoice } from '../voice';
+import { voice } from '../voice';
 import { robot } from './robot.svelte';
 
 export type SessionPhase = 'idle' | 'starting' | 'listening' | 'thinking' | 'speaking' | 'error';
@@ -25,7 +25,6 @@ class SessionStore {
 	readonly micAvailable = recognizer.available;
 
 	#relay: RelayClient;
-	#voice = new BrowserVoice();
 	#nextId = 1;
 
 	constructor() {
@@ -49,7 +48,7 @@ class SessionStore {
 
 	end(): void {
 		this.stopListening();
-		this.#voice.stop();
+		voice.stop();
 		this.#relay.endSession();
 		this.#relay.close();
 		robot.setSpeaking(false);
@@ -64,7 +63,7 @@ class SessionStore {
 	}
 
 	stopSpeaking(): void {
-		this.#voice.stop();
+		voice.stop();
 		robot.setSpeaking(false);
 		if (this.phase === 'speaking') this.#toListening();
 	}
@@ -93,15 +92,15 @@ class SessionStore {
 	}
 
 	setVoice(uri: string | null): void {
-		this.#voice.setVoice(uri);
+		voice.setVoice(uri);
 	}
 
 	voices(): SpeechSynthesisVoice[] {
-		return this.#voice.voices();
+		return voice.voices();
 	}
 
 	testVoice(): void {
-		void this.#voice.speak('Hello, I am the AT Bots assistant.');
+		void voice.speak('Hello, I am the AT Bots assistant.');
 	}
 
 	#createRelay(): RelayClient {
@@ -153,7 +152,7 @@ class SessionStore {
 		this.phase = 'speaking';
 		robot.setSpeaking(true);
 		robot.setExpression('speaking');
-		await this.#voice.speak(text);
+		await voice.speak(text);
 		robot.setSpeaking(false);
 		if (this.phase === 'speaking') this.#toListening();
 	}

@@ -77,4 +77,20 @@ describe('MockEspLink', () => {
 
 		expect(messages).toContainEqual({ t: 'nack', reason: 'unknown_command', got: 'bogus' });
 	});
+
+	it('acks script_say and emits a say event', () => {
+		const link = new MockEspLink();
+		const messages = collect(link);
+		link.connect();
+		vi.advanceTimersByTime(1);
+
+		link.send({ t: 'script_say', text: 'Welcome to the event.' });
+
+		expect(messages).toContainEqual({ t: 'ack', cmd: 'script_say' });
+		expect(messages).toContainEqual({
+			t: 'event',
+			event: 'say',
+			detail: 'Welcome to the event.'
+		});
+	});
 });

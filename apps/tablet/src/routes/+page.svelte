@@ -53,7 +53,7 @@
 
 	<div class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-8 py-10">
 		<header class="flex items-center gap-5" use:fadeIn>
-			<Face expression="neutral" class="h-14 w-24 shrink-0" />
+			<Face expression={robot.expression} speaking={robot.speaking} class="h-14 w-24 shrink-0" />
 			<div>
 				<h1 class="text-2xl font-semibold tracking-tight">AT Bots</h1>
 				<p class="text-muted-foreground text-sm">Interactive assistant · V3 Lite</p>

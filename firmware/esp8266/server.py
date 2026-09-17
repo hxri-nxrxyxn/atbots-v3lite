@@ -1,11 +1,11 @@
 """Bench HTTP + WebSocket server for the ESP8266 prototype.
 
-HTTP:  GET /status -> JSON status
-WS:    /ws         -> JSON command channel (see docs/protocol.md, to come)
+Serves several WebSocket clients at once (tablet + operator) and broadcasts
+telemetry, events and Script Mode announcements.
 
 Safety here is best-effort only: the deadman stop is a software timer in a
 single-threaded loop. The shipping design puts real safety on dedicated
-hardware (e-stop relay); see the design doc.
+hardware (an e-stop relay); see the design doc.
 """
 
 import gc
@@ -17,8 +17,10 @@ import time
 import net
 import ws
 
+PROTOCOL_VERSION = 1
 DEADMAN_MS = 500
 TELEMETRY_MS = 1000
+MAX_BUFFER = 1024
 
 STATE = {"drive": "stop", "speed": 0, "expression": "neutral", "speaking": False}
 
@@ -28,6 +30,13 @@ def now_ms():
         return time.ticks_ms()
     except AttributeError:
         return int(time.time() * 1000)
+
+
+def diff_ms(a, b):
+    try:
+        return time.ticks_diff(a, b)
+    except AttributeError:
+        return a - b
 
 
 def status(wlan):
@@ -47,63 +56,35 @@ def telemetry():
 
 
 def handle_command(msg):
+    """Return (reply, broadcast_or_None) for one client command."""
     kind = msg.get("t")
     if kind == "hb":
-        return {"t": "hb_ack", "seq": msg.get("seq")}
+        return {"t": "hb_ack", "seq": msg.get("seq")}, None
     if kind == "drive":
         STATE["drive"] = msg.get("dir", "stop")
         STATE["speed"] = msg.get("speed", 0)
-        return {"t": "ack", "cmd": "drive"}
+        return {"t": "ack", "cmd": "drive"}, None
     if kind == "stop":
         STATE["drive"] = "stop"
         STATE["speed"] = 0
-        return {"t": "ack", "cmd": "stop"}
+        return {"t": "ack", "cmd": "stop"}, None
     if kind == "set_expression":
         STATE["expression"] = msg.get("value", "neutral")
-        return {"t": "ack", "cmd": "set_expression"}
+        return {"t": "ack", "cmd": "set_expression"}, None
     if kind == "set_speaking":
         STATE["speaking"] = bool(msg.get("value", False))
-        return {"t": "ack", "cmd": "set_speaking"}
+        return {"t": "ack", "cmd": "set_speaking"}, None
+    if kind == "play_sequence":
+        return {"t": "ack", "cmd": "play_sequence"}, None
+    if kind == "home":
+        STATE["expression"] = "neutral"
+        return {"t": "ack", "cmd": "home"}, None
     if kind == "script_say":
-        return {"t": "ack", "cmd": "script_say"}
-    return {"t": "nack", "reason": "unknown_command", "got": kind}
-
-
-def ws_session(conn, wlan):
-    last_hb = now_ms()
-    last_tel = last_hb
-    ws.send_text(conn, json.dumps({"t": "hello", "proto": 1, "ip": net.ip(wlan)}))
-
-    while True:
-        ready, _, _ = select.select([conn], [], [], 0.2)
-        now = now_ms()
-
-        if ready:
-            opcode, payload = ws.read_frame(conn)
-            if opcode == ws.OP_CLOSE:
-                ws.send_frame(conn, ws.OP_CLOSE, b"")
-                return
-            if opcode == ws.OP_PING:
-                ws.send_frame(conn, ws.OP_PONG, payload)
-            elif opcode in (ws.OP_TEXT, ws.OP_BIN):
-                try:
-                    msg = json.loads(payload)
-                except Exception:  # noqa: BLE001
-                    ws.send_text(conn, json.dumps({"t": "nack", "reason": "bad_json"}))
-                    continue
-                if msg.get("t") == "hb":
-                    last_hb = now
-                ws.send_text(conn, json.dumps(handle_command(msg)))
-
-        if STATE["drive"] != "stop" and now - last_hb > DEADMAN_MS:
-            STATE["drive"] = "stop"
-            STATE["speed"] = 0
-            ws.send_text(conn, json.dumps({"t": "event", "event": "deadman_stop"}))
-
-        if now - last_tel > TELEMETRY_MS:
-            last_tel = now
-            gc.collect()
-            ws.send_text(conn, json.dumps(telemetry()))
+        return (
+            {"t": "ack", "cmd": "script_say"},
+            {"t": "event", "event": "say", "detail": msg.get("text", "")},
+        )
+    return {"t": "nack", "reason": "unknown_command", "got": kind}, None
 
 
 def parse_request(req):
@@ -136,23 +117,123 @@ def main():
     srv = socket.socket()
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     srv.bind(("0.0.0.0", 80))
-    srv.listen(2)
+    srv.listen(4)
+    srv.setblocking(False)
     print("listening on http://%s/  ws://%s/ws" % (ip, ip))
 
-    while True:
-        conn, _addr = srv.accept()
+    clients = []
+    last_hb = now_ms()
+    last_tel = last_hb
+
+    def drop(client):
+        if client in clients:
+            clients.remove(client)
         try:
-            req = conn.recv(1024)
-            path, headers = parse_request(req)
-            if path == "/ws" and headers.get("upgrade", "").lower() == "websocket":
-                ws.handshake(conn, headers.get("sec-websocket-key", ""))
-                ws_session(conn, wlan)
-            else:
-                http_response(conn, status(wlan))
-        except Exception as exc:  # noqa: BLE001
-            print("error:", exc)
-        finally:
-            conn.close()
+            client["sock"].close()
+        except OSError:
+            pass
+
+    def send_raw(client, data):
+        try:
+            client["sock"].send(data)
+        except OSError:
+            drop(client)
+
+    def send_to(client, msg):
+        send_raw(client, ws.encode_frame(ws.OP_TEXT, json.dumps(msg)))
+
+    def broadcast(msg):
+        data = ws.encode_frame(ws.OP_TEXT, json.dumps(msg))
+        for client in list(clients):
+            if client["ws"]:
+                send_raw(client, data)
+
+    while True:
+        socks = [srv] + [client["sock"] for client in clients]
+        ready, _, _ = select.select(socks, [], [], 0.2)
+        now = now_ms()
+
+        if srv in ready:
+            try:
+                conn, _addr = srv.accept()
+                conn.setblocking(False)
+                clients.append({"sock": conn, "ws": False, "buf": bytearray()})
+            except OSError:
+                pass
+
+        for client in list(clients):
+            sock = client["sock"]
+            if sock not in ready:
+                continue
+
+            try:
+                data = sock.recv(256)
+            except OSError:
+                data = b""
+            if not data:
+                drop(client)
+                continue
+
+            buf = client["buf"]
+            buf.extend(data)
+            if len(buf) > MAX_BUFFER:
+                drop(client)
+                continue
+
+            if not client["ws"]:
+                if b"\r\n\r\n" not in buf:
+                    continue
+                request = bytes(buf)
+                client["buf"] = bytearray()
+                path, headers = parse_request(request)
+                if path == "/ws" and headers.get("upgrade", "").lower() == "websocket":
+                    ws.handshake(sock, headers.get("sec-websocket-key", ""))
+                    client["ws"] = True
+                    send_to(client, {"t": "hello", "proto": PROTOCOL_VERSION, "ip": ip})
+                else:
+                    http_response(sock, status(wlan))
+                    drop(client)
+                continue
+
+            while True:
+                parsed = ws.parse_frame(client["buf"])
+                if parsed is None:
+                    break
+                opcode, payload, consumed = parsed
+                del client["buf"][:consumed]
+
+                if opcode == ws.OP_CLOSE:
+                    drop(client)
+                    break
+                if opcode == ws.OP_PING:
+                    send_raw(client, ws.encode_frame(ws.OP_PONG, payload))
+                    continue
+                if opcode not in (ws.OP_TEXT, ws.OP_BIN):
+                    continue
+
+                try:
+                    msg = json.loads(payload)
+                except Exception:  # noqa: BLE001
+                    send_to(client, {"t": "nack", "reason": "bad_json"})
+                    continue
+
+                if msg.get("t") == "hb":
+                    last_hb = now
+
+                reply, announce = handle_command(msg)
+                send_to(client, reply)
+                if announce is not None:
+                    broadcast(announce)
+
+        if STATE["drive"] != "stop" and diff_ms(now, last_hb) > DEADMAN_MS:
+            STATE["drive"] = "stop"
+            STATE["speed"] = 0
+            broadcast({"t": "event", "event": "deadman_stop"})
+
+        if diff_ms(now, last_tel) > TELEMETRY_MS:
+            last_tel = now
+            gc.collect()
+            broadcast(telemetry())
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 """Tiny RFC 6455 WebSocket server helpers for MicroPython (ESP8266).
 
-Only what the bench prototype needs: handshake, frame read (with client
-masking), frame write. No fragmentation, no extensions, no permessage-deflate.
+Only what the bench prototype needs: handshake, non-blocking frame parsing
+(client masking) and frame encoding. No fragmentation, no extensions.
 """
 
 import binascii
@@ -35,36 +35,8 @@ def handshake(conn, key):
     conn.send(response.encode())
 
 
-def _recv_exact(conn, n):
-    buf = b""
-    while len(buf) < n:
-        chunk = conn.recv(n - len(buf))
-        if not chunk:
-            raise OSError("connection closed")
-        buf += chunk
-    return buf
-
-
-def read_frame(conn):
-    header = _recv_exact(conn, 2)
-    opcode = header[0] & 0x0F
-    masked = header[1] & 0x80
-    length = header[1] & 0x7F
-    if length == 126:
-        length = int.from_bytes(_recv_exact(conn, 2), "big")
-    elif length == 127:
-        length = int.from_bytes(_recv_exact(conn, 8), "big")
-    mask = _recv_exact(conn, 4) if masked else None
-    payload = _recv_exact(conn, length) if length else b""
-    if mask:
-        unmasked = bytearray(payload)
-        for i in range(len(unmasked)):
-            unmasked[i] ^= mask[i % 4]
-        payload = bytes(unmasked)
-    return opcode, payload
-
-
-def send_frame(conn, opcode, payload):
+def encode_frame(opcode, payload):
+    """Build a server->client frame (unmasked) as bytes."""
     if isinstance(payload, str):
         payload = payload.encode()
     length = len(payload)
@@ -78,7 +50,55 @@ def send_frame(conn, opcode, payload):
         header.append(127)
         header.extend(length.to_bytes(8, "big"))
     header.extend(payload)
-    conn.send(header)
+    return bytes(header)
+
+
+def parse_frame(buf):
+    """Parse one frame from `buf` without blocking.
+
+    Returns (opcode, payload, consumed) or None when the frame is incomplete.
+    """
+    if len(buf) < 2:
+        return None
+
+    opcode = buf[0] & 0x0F
+    masked = buf[1] & 0x80
+    length = buf[1] & 0x7F
+    offset = 2
+
+    if length == 126:
+        if len(buf) < 4:
+            return None
+        length = int.from_bytes(buf[2:4], "big")
+        offset = 4
+    elif length == 127:
+        if len(buf) < 10:
+            return None
+        length = int.from_bytes(buf[2:10], "big")
+        offset = 10
+
+    mask = None
+    if masked:
+        if len(buf) < offset + 4:
+            return None
+        mask = buf[offset : offset + 4]
+        offset += 4
+
+    if len(buf) < offset + length:
+        return None
+
+    payload = bytes(buf[offset : offset + length])
+    if mask:
+        unmasked = bytearray(payload)
+        for i in range(len(unmasked)):
+            unmasked[i] ^= mask[i % 4]
+        payload = bytes(unmasked)
+
+    return opcode, payload, offset + length
+
+
+def send_frame(conn, opcode, payload):
+    conn.send(encode_frame(opcode, payload))
 
 
 def send_text(conn, text):
