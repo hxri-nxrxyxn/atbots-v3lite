@@ -26,6 +26,7 @@ class RobotStore {
 	/** Locally driven face state (immediate, not waiting on telemetry echo). */
 	expression = $state<Expression>('neutral');
 	speaking = $state(false);
+	estop = $state(false);
 
 	#link: EspLink = new MockEspLink();
 	#unsubs: Array<() => void> = [];
@@ -74,11 +75,18 @@ class RobotStore {
 	}
 
 	drive(dir: DriveDirection, speed: number): void {
+		if (this.estop) return;
 		this.#link.send({ topic: 'cmd/drive', payload: { dir, speed } });
 	}
 
 	stop(): void {
 		this.#link.send({ topic: 'cmd/stop', payload: {} });
+	}
+
+	toggleEstop(): void {
+		this.estop = !this.estop;
+		if (this.estop) this.#link.send({ topic: 'cmd/stop', payload: {} });
+		this.#link.send({ topic: 'cmd/debug/estop', payload: { active: this.estop } });
 	}
 
 	#onMessage(message: EspMessage): void {

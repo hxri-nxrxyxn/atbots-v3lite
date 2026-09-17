@@ -47,13 +47,13 @@
 		{
 			href: '/manual',
 			title: 'Manual mode',
-			description: 'Hardware telemetry and status controls',
+			description: 'Live robot control, telemetry & joints',
 			icon: Hand
 		},
 		{
 			href: '/settings',
 			title: 'Settings',
-			description: 'Robot link, voice engine, and commissioning',
+			description: 'Robot link, voice engine & commissioning',
 			icon: Settings
 		}
 	];
@@ -67,45 +67,60 @@
 	<title>AT Bots — Home</title>
 </svelte:head>
 
-<div class="flex h-full flex-col">
+<div class="flex h-full flex-col overflow-hidden bg-background">
 	<StatusBar />
 
-	<!-- Portrait Kiosk Content Frame -->
-	<main class="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-between px-6 py-8">
-		<!-- Hero Branding & Face Header -->
-		<header class="flex items-center gap-6 border-b border-border/70 pb-6" use:fadeIn>
-			<Face expression={robot.expression} speaking={robot.speaking} class="h-20 w-32 shrink-0" />
+	<!-- Scrollable Container: Top 40vh Hero Face + Peeking Tiles Below -->
+	<div class="flex-1 overflow-y-auto">
+		<!-- Top 40vh Hero Section (Canvas for 3D/Expressive Face) -->
+		<section
+			class="h-[38vh] min-h-[260px] max-h-[400px] border-b border-border/60 bg-gradient-to-b from-card/30 to-background flex flex-col items-center justify-center px-6 text-center select-none"
+			use:fadeIn
+		>
+			<div class="flex justify-center mb-3">
+				<Face
+					expression={robot.expression}
+					speaking={robot.speaking}
+					class="h-36 w-60 drop-shadow-md"
+				/>
+			</div>
 			<div>
-				<span
-					class="text-xs font-mono font-medium text-muted-foreground uppercase tracking-wider block"
-				>
-					Receptionist & Host Platform
-				</span>
-				<h1 class="text-2xl font-bold tracking-tight text-foreground mt-0.5">Welcome to AT Bots</h1>
-				<p class="text-muted-foreground text-xs mt-1 leading-relaxed">
-					Touch any module below to start an interactive experience.
+				<h1 class="text-xl font-bold tracking-tight text-foreground">AT Bots Receptionist</h1>
+				<p class="text-muted-foreground text-xs mt-0.5 font-mono">
+					{robot.status === 'open' ? 'System Online · Touch to Interact' : 'Offline / Standby'}
 				</p>
 			</div>
-		</header>
+		</section>
 
-		<!-- 2-Column Portrait Optimized Grid -->
-		<div class="grid grid-cols-2 gap-4 py-6" use:staggerIn>
-			{#each modes as mode (mode.href)}
-				<ModeTile
-					href={mode.href}
-					title={mode.title}
-					description={mode.description}
-					icon={mode.icon}
-					primary={mode.primary}
-				/>
-			{/each}
-		</div>
+		<!-- Bottom Content Section: Tiles Flow Below and Peek into View -->
+		<main class="mx-auto w-full max-w-2xl px-6 py-6 space-y-6">
+			<div class="flex items-center justify-between">
+				<h2 class="text-xs font-semibold text-muted-foreground font-mono uppercase tracking-wider">
+					Interactive Modules
+				</h2>
+				<span class="text-[11px] text-muted-foreground/70 font-mono">
+					Scroll for all options ↓
+				</span>
+			</div>
 
-		<!-- Footer Notice -->
-		<footer
-			class="border-t border-border/70 pt-4 text-center text-[11px] text-muted-foreground font-mono"
-		>
-			Touch to begin · Supervised kiosk engagement platform
-		</footer>
-	</main>
+			<!-- 2-Column Portrait Tiles -->
+			<div class="grid grid-cols-2 gap-3.5" use:staggerIn>
+				{#each modes as mode (mode.href)}
+					<ModeTile
+						href={mode.href}
+						title={mode.title}
+						description={mode.description}
+						icon={mode.icon}
+						primary={mode.primary}
+					/>
+				{/each}
+			</div>
+
+			<footer
+				class="border-t border-border/60 pt-6 pb-2 text-center text-[11px] text-muted-foreground font-mono"
+			>
+				Touch any module to begin · Physical kiosk engagement platform
+			</footer>
+		</main>
+	</div>
 </div>
