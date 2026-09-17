@@ -1,7 +1,4 @@
-"""Ad-hoc WebSocket probe for the ESP8266 bench server.
-
-Usage: .venv/bin/python firmware/esp8266/tools/ws_probe.py [ws://host/ws]
-"""
+"""Ad-hoc WebSocket probe for the ESP8266 bench server using Topic schema."""
 
 import json
 import sys
@@ -9,16 +6,19 @@ import time
 
 import websocket
 
-URL = sys.argv[1] if len(sys.argv) > 1 else "ws://192.168.0.155/ws"
+URL = sys.argv[1] if len(sys.argv) > 1 else "ws://localhost:8765/ws"
 
 
 def main():
     ws = websocket.create_connection(URL, timeout=5)
     print("connected to", URL)
 
-    def send(obj):
-        print("->", obj)
-        ws.send(json.dumps(obj))
+    def send(topic, payload, req_id=None):
+        msg = {"topic": topic, "payload": payload}
+        if req_id:
+            msg["id"] = req_id
+        print("->", msg)
+        ws.send(json.dumps(msg))
 
     def drain(seconds):
         end = time.time() + seconds
@@ -30,15 +30,15 @@ def main():
                 pass
 
     drain(1.5)
-    send({"t": "hb", "seq": 1})
+    send("sys/hb", {"seq": 1}, req_id="hb_1")
     drain(0.5)
-    send({"t": "drive", "dir": "forward", "speed": 5})
+    send("cmd/drive", {"dir": "forward", "speed": 5}, req_id="drive_1")
     drain(0.8)
     print("--- silent: expect deadman_stop ---")
     drain(1.5)
-    send({"t": "stop"})
-    send({"t": "set_expression", "value": "happy"})
-    send({"t": "bogus"})
+    send("cmd/stop", {}, req_id="stop_1")
+    send("cmd/expression", {"value": "happy"}, req_id="exp_1")
+    send("cmd/bogus", {}, req_id="bad_1")
     drain(1.0)
     ws.close()
     print("closed")

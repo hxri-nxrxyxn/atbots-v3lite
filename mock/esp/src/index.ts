@@ -1,7 +1,6 @@
 /**
- * Node simulator for the robot's ESP. Speaks the exact same JSON-over-WebSocket
- * protocol as `firmware/esp8266`, so the apps can be developed and demoed
- * without hardware.
+ * Node simulator for the robot's ESP. Speaks the exact same Topic & Payload
+ * JSON-over-WebSocket protocol as `firmware/esp8266`.
  *
  *   ws://localhost:8765/ws   command channel
  *   http://localhost:8765/status
@@ -36,13 +35,15 @@ let lastHb = Date.now();
 
 function telemetry(): EspMessage {
 	return {
-		t: 'telemetry',
-		drive: state.drive,
-		speed: state.speed,
-		expression: state.expression,
-		speaking: state.speaking,
-		free: 25000,
-		uptime_ms: Date.now() - startedAt
+		topic: 'telemetry',
+		payload: {
+			drive: state.drive,
+			speed: state.speed,
+			expression: state.expression,
+			speaking: state.speaking,
+			free: 25000,
+			uptime_ms: Date.now() - startedAt
+		}
 	};
 }
 
@@ -74,48 +75,96 @@ function reply(ws: WebSocket, message: EspMessage): void {
 }
 
 function handleCommand(ws: WebSocket, message: ClientMessage): void {
-	switch (message.t) {
-		case 'hb':
+	const id = message.id;
+
+	switch (message.topic) {
+		case 'sys/hb':
 			lastHb = Date.now();
-			reply(ws, { t: 'hb_ack', seq: message.seq });
+			reply(ws, {
+				topic: 'res/hb_ack',
+				payload: { seq: message.payload.seq },
+				id
+			});
 			return;
-		case 'drive':
-			state.drive = message.dir;
-			state.speed = message.speed;
-			reply(ws, { t: 'ack', cmd: 'drive' });
+		case 'cmd/drive':
+			state.drive = message.payload.dir;
+			state.speed = message.payload.speed;
+			reply(ws, {
+				topic: 'res/ack',
+				payload: { status: 'ok', cmd: 'cmd/drive' },
+				id
+			});
 			return;
-		case 'stop':
+		case 'cmd/stop':
 			state.drive = 'stop';
 			state.speed = 0;
-			reply(ws, { t: 'ack', cmd: 'stop' });
+			reply(ws, {
+				topic: 'res/ack',
+				payload: { status: 'ok', cmd: 'cmd/stop' },
+				id
+			});
 			return;
-		case 'set_expression':
-			state.expression = message.value;
-			reply(ws, { t: 'ack', cmd: 'set_expression' });
+		case 'cmd/expression':
+			state.expression = message.payload.value;
+			reply(ws, {
+				topic: 'res/ack',
+				payload: { status: 'ok', cmd: 'cmd/expression' },
+				id
+			});
 			return;
-		case 'set_speaking':
-			state.speaking = message.value;
-			reply(ws, { t: 'ack', cmd: 'set_speaking' });
+		case 'cmd/speaking':
+			state.speaking = message.payload.value;
+			reply(ws, {
+				topic: 'res/ack',
+				payload: { status: 'ok', cmd: 'cmd/speaking' },
+				id
+			});
 			return;
-		case 'script_say':
-			reply(ws, { t: 'ack', cmd: 'script_say' });
-			broadcast({ t: 'event', event: 'say', detail: message.text });
+		case 'cmd/say':
+			reply(ws, {
+				topic: 'res/ack',
+				payload: { status: 'ok', cmd: 'cmd/say' },
+				id
+			});
+			broadcast({
+				topic: 'event/say',
+				payload: { text: message.payload.text }
+			});
 			return;
-		case 'play_sequence':
-			reply(ws, { t: 'ack', cmd: 'play_sequence' });
+		case 'cmd/sequence':
+			reply(ws, {
+				topic: 'res/ack',
+				payload: { status: 'ok', cmd: 'cmd/sequence' },
+				id
+			});
 			return;
-		case 'home':
+		case 'cmd/home':
 			state.expression = 'neutral';
-			reply(ws, { t: 'ack', cmd: 'home' });
+			reply(ws, {
+				topic: 'res/ack',
+				payload: { status: 'ok', cmd: 'cmd/home' },
+				id
+			});
 			return;
 		default:
-			reply(ws, { t: 'nack', reason: 'unknown_command', got: (message as { t: string }).t });
+			reply(ws, {
+				topic: 'res/nack',
+				payload: {
+					status: 'error',
+					reason: 'unknown_topic',
+					got: (message as { topic: string }).topic
+				},
+				id
+			});
 	}
 }
 
 wss.on('connection', (ws) => {
 	ws.send(
-		JSON.stringify({ t: 'hello', proto: PROTOCOL_VERSION, ip: '127.0.0.1' } satisfies EspMessage)
+		JSON.stringify({
+			topic: 'sys/hello',
+			payload: { proto: PROTOCOL_VERSION, ip: '127.0.0.1', robot_id: 'bot-001' }
+		} satisfies EspMessage)
 	);
 
 	ws.on('message', (data) => {
@@ -123,14 +172,20 @@ wss.on('connection', (ws) => {
 		try {
 			parsed = JSON.parse(String(data));
 		} catch {
-			reply(ws, { t: 'nack', reason: 'bad_json' });
+			reply(ws, {
+				topic: 'res/nack',
+				payload: { status: 'error', reason: 'bad_json' }
+			});
 			return;
 		}
 		if (!isClientMessage(parsed)) {
 			reply(ws, {
-				t: 'nack',
-				reason: 'unknown_command',
-				got: String((parsed as { t?: string })?.t)
+				topic: 'res/nack',
+				payload: {
+					status: 'error',
+					reason: 'invalid_topic_envelope',
+					got: String((parsed as { topic?: string })?.topic)
+				}
 			});
 			return;
 		}
@@ -142,7 +197,7 @@ setInterval(() => {
 	if (state.drive !== 'stop' && Date.now() - lastHb > DEADMAN_MS) {
 		state.drive = 'stop';
 		state.speed = 0;
-		broadcast({ t: 'event', event: 'deadman_stop' });
+		broadcast({ topic: 'event/deadman', payload: { state: 'stopped' } });
 	}
 	broadcast(telemetry());
 }, TELEMETRY_MS);

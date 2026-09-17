@@ -1,36 +1,45 @@
 # Protocol
 
-Two JSON-over-WebSocket channels, defined once in `packages/protocol` and implemented by
+Two standardized WebSocket channels, defined once in `packages/protocol` and implemented by
 `mock/esp`, `firmware/esp8266` and `packages/link`. Never duplicate message strings in apps.
 
-## App ↔ ESP (local control plane)
+## App ↔ ESP (Local Control Plane)
 
-Transport: `ws://<robot-ip>/ws`. Plain JSON text frames.
+Transport: `ws://<robot-ip>/ws`. MQTT-style **Topic & Payload JSON envelopes** with optional correlated **Request-Response IDs** (`id`).
 
-| Direction | Message | Notes |
-|---|---|---|
-| app → esp | `{"t":"hb","seq":n}` | 5 Hz (every 200 ms) |
-| app → esp | `{"t":"drive","dir":"forward","speed":5}` | `stop`/`forward`/`backward`/`left`/`right` |
-| app → esp | `{"t":"stop"}` | |
-| app → esp | `{"t":"set_expression","value":"happy"}` | |
-| app → esp | `{"t":"set_speaking","value":true}` | drives face mouth |
-| app → esp | `{"t":"script_say","text":"..."}` | Script Mode |
-| app → esp | `{"t":"play_sequence","name":"wave"}` | |
-| app → esp | `{"t":"home"}` | |
-| esp → app | `{"t":"hello","proto":1,"ip":"..."}` | on connect |
-| esp → app | `{"t":"telemetry","drive":...,"speed":...,"expression":...,"speaking":...,"free":...,"uptime_ms":...}` | 1 Hz |
-| esp → app | `{"t":"hb_ack","seq":n}` | |
-| esp → app | `{"t":"ack","cmd":"drive"}` | |
-| esp → app | `{"t":"nack","reason":"unknown_command","got":"..."}` | rejected, never silently clamped |
-| esp → app | `{"t":"event","event":"deadman_stop","detail":"..."}` | `deadman_stop`/`estop`/`charger_connected`/`servo_fault`/`say` |
+```typescript
+interface Envelope<TTopic, TPayload> {
+  topic: TTopic;
+  payload: TPayload;
+  id?: string;   // Correlated request/response ID
+  ts?: number;   // Millisecond timestamp
+}
+```
 
-- **Deadman:** if no `hb` arrives within 500 ms, the ESP stops the drive and emits
-  `deadman_stop`.
-- **Script Mode** routes operator → ESP → all connected clients (`event: say`); the tablet
-  speaks it.
-- HTTP `GET /status` also returns the robot state as JSON.
+| Direction | Topic | Payload | Handshake / Response |
+|---|---|---|---|
+| **App ↔ ESP** | `sys/hello` | `{ proto: 2, ip: string, robot_id?: string }` | Sent by ESP on connect |
+| **App → ESP** | `sys/hb` | `{ seq: number }` | `res/hb_ack` (`{ seq: number }`) |
+| **App → ESP** | `cmd/drive` | `{ dir: 'forward'\|'stop'..., speed: 0-10 }` | `res/ack` (`{ status: 'ok', cmd: 'cmd/drive' }`) |
+| **App → ESP** | `cmd/stop` | `{}` | `res/ack` (`{ status: 'ok', cmd: 'cmd/stop' }`) |
+| **App → ESP** | `cmd/expression` | `{ value: 'happy'\|'neutral'... }` | `res/ack` (`{ status: 'ok', cmd: 'cmd/expression' }`) |
+| **App → ESP** | `cmd/speaking` | `{ value: boolean }` | `res/ack` (`{ status: 'ok', cmd: 'cmd/speaking' }`) |
+| **App → ESP** | `cmd/say` | `{ text: string }` | `res/ack` (`{ status: 'ok', cmd: 'cmd/say' }`) + broadcasts `event/say` |
+| **App → ESP** | `cmd/sequence` | `{ name: string }` | `res/ack` (`{ status: 'ok', cmd: 'cmd/sequence' }`) |
+| **App → ESP** | `cmd/home` | `{}` | `res/ack` (`{ status: 'ok', cmd: 'cmd/home' }`) |
+| **ESP → All** | `telemetry` | `{ drive, speed, expression, speaking, free, uptime_ms }` | 1 Hz periodic broadcast |
+| **ESP → All** | `event/say` | `{ text: string, from?: string }` | Broadcast on Script Mode line |
+| **ESP → All** | `event/deadman` | `{ state: 'stopped' }` | Failsafe trip broadcast |
+| **ESP → All** | `event/estop` | `{ state: 'active' \| 'cleared' }` | E-stop status change |
+| **ESP → Sender**| `res/ack` | `{ status: 'ok', cmd: string }` | Correlated command confirmation |
+| **ESP → Sender**| `res/nack` | `{ status: 'error', reason: string, got?: string }` | Rejected command with explanation |
 
-## App ↔ cloud (data plane)
+- **Deadman:** If no `sys/hb` arrives within 500 ms, the ESP stops the drive and emits `event/deadman`.
+- **Script Mode:** Routes Operator (`cmd/say`) → ESP → all connected clients (`event/say`); the tablet speaks it.
+- **Correlated Handshakes:** Using `link.request(topic, payload)` sends an `id` and awaits the matching `res/ack` response.
+- HTTP `GET /status` returns the robot state as JSON.
+
+## App ↔ Cloud (Data Plane)
 
 Stateless API (`mock/cloud`, port 8787):
 
@@ -41,8 +50,7 @@ Stateless API (`mock/cloud`, port 8787):
 Relay (`ws://localhost:8787/v1/session`):
 
 - client → `session.start`, `user.text`, `audio.chunk`, `audio.end`, `session.end`
-- server → `session.started`, `transcript.final`, `reply.chunk`, `tool.call`, `session.error`,
-  `session.ended`
+- server → `session.started`, `transcript.final`, `reply.chunk`, `tool.call`, `session.error`, `session.ended`
 
 The relay picks its model with `AI_PROVIDER` (`mock` default, `openai` for a real provider).
 Provider keys live only on the dev server, never in a client app.

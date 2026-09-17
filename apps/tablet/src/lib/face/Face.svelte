@@ -139,20 +139,8 @@
 	</g>
 
 	<g class="stroke-foreground" fill="none" stroke-width="6" stroke-linecap="round">
-		<line
-			x1="58"
-			y1={browY}
-			x2="98"
-			y2={browY}
-			transform="rotate({browTilt} 78 {browY})"
-		/>
-		<line
-			x1="142"
-			y1={browY}
-			x2="182"
-			y2={browY}
-			transform="rotate({-browTilt} 162 {browY})"
-		/>
+		<line x1="58" y1={browY} x2="98" y2={browY} transform="rotate({browTilt} 78 {browY})" />
+		<line x1="142" y1={browY} x2="182" y2={browY} transform="rotate({-browTilt} 162 {browY})" />
 	</g>
 
 	<path

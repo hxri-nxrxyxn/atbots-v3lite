@@ -72,7 +72,7 @@ packages/protocol              message shapes, type guards, constants — single
 packages/link                  EspLink (WS) + MockEspLink + CloudClient
 mock/esp, mock/cloud           Node simulators
 firmware/esp8266               MicroPython
-docs/                          design doc, protocol.md, runbook.md, runbook.md
+docs/                          design doc, protocol.md, runbook.md
 ```
 
 - `packages/*` export TypeScript source directly (`exports: "./src/index.ts"`); there is no
@@ -81,10 +81,12 @@ docs/                          design doc, protocol.md, runbook.md, runbook.md
 
 ## Protocol conventions
 
-- JSON over WebSocket. The ESP is the local hub: both apps connect to it.
-- Script Mode routes operator → ESP → tablet; the tablet speaks.
-- Heartbeat 5 Hz (200 ms); deadman 500 ms → stop.
-- Never duplicate message strier duplicate message strings outside `packages/protocol`.
+- Topic & Payload JSON over WebSocket (`cmd/drive`, `telemetry`, `event/say`).
+- The ESP is the local hub: both apps connect to it.
+- Script Mode routes operator (`cmd/say`) → ESP → tablet (`event/say`); the tablet speaks.
+- Heartbeat 5 Hz (`sys/hb` @ 200 ms); deadman 500 ms → stop (`event/deadman`).
+- Handshakes: `link.request(topic, payload)` resolves on correlated `res/ack`.
+- Never duplicate message strings outside `packages/protocol`.
 
 ## AI and voice
 

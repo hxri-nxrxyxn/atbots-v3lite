@@ -1,11 +1,6 @@
 """Bench HTTP + WebSocket server for the ESP8266 prototype.
 
-Serves several WebSocket clients at once (tablet + operator) and broadcasts
-telemetry, events and Script Mode announcements.
-
-Safety here is best-effort only: the deadman stop is a software timer in a
-single-threaded loop. The shipping design puts real safety on dedicated
-hardware (an e-stop relay); see the design doc.
+Standardized Topic & Payload WebSocket protocol with correlated Request-Response IDs.
 """
 
 import gc
@@ -17,7 +12,7 @@ import time
 import net
 import ws
 
-PROTOCOL_VERSION = 1
+PROTOCOL_VERSION = 2
 DEADMAN_MS = 500
 TELEMETRY_MS = 1000
 MAX_BUFFER = 1024
@@ -45,46 +40,99 @@ def status(wlan):
 
 def telemetry():
     return {
-        "t": "telemetry",
-        "drive": STATE["drive"],
-        "speed": STATE["speed"],
-        "expression": STATE["expression"],
-        "speaking": STATE["speaking"],
-        "free": gc.mem_free(),
-        "uptime_ms": now_ms(),
+        "topic": "telemetry",
+        "payload": {
+            "drive": STATE["drive"],
+            "speed": STATE["speed"],
+            "expression": STATE["expression"],
+            "speaking": STATE["speaking"],
+            "free": gc.mem_free(),
+            "uptime_ms": now_ms(),
+        },
     }
 
 
 def handle_command(msg):
-    """Return (reply, broadcast_or_None) for one client command."""
-    kind = msg.get("t")
-    if kind == "hb":
-        return {"t": "hb_ack", "seq": msg.get("seq")}, None
-    if kind == "drive":
-        STATE["drive"] = msg.get("dir", "stop")
-        STATE["speed"] = msg.get("speed", 0)
-        return {"t": "ack", "cmd": "drive"}, None
-    if kind == "stop":
+    """Return (reply_or_None, broadcast_or_None) for an incoming topic envelope."""
+    topic = msg.get("topic")
+    payload = msg.get("payload", {})
+    req_id = msg.get("id")
+
+    if topic == "sys/hb":
+        return {
+            "topic": "res/hb_ack",
+            "payload": {"seq": payload.get("seq", 0)},
+            "id": req_id,
+        }, None
+
+    if topic == "cmd/drive":
+        STATE["drive"] = payload.get("dir", "stop")
+        STATE["speed"] = payload.get("speed", 0)
+        return {
+            "topic": "res/ack",
+            "payload": {"status": "ok", "cmd": "cmd/drive"},
+            "id": req_id,
+        }, None
+
+    if topic == "cmd/stop":
         STATE["drive"] = "stop"
         STATE["speed"] = 0
-        return {"t": "ack", "cmd": "stop"}, None
-    if kind == "set_expression":
-        STATE["expression"] = msg.get("value", "neutral")
-        return {"t": "ack", "cmd": "set_expression"}, None
-    if kind == "set_speaking":
-        STATE["speaking"] = bool(msg.get("value", False))
-        return {"t": "ack", "cmd": "set_speaking"}, None
-    if kind == "play_sequence":
-        return {"t": "ack", "cmd": "play_sequence"}, None
-    if kind == "home":
+        return {
+            "topic": "res/ack",
+            "payload": {"status": "ok", "cmd": "cmd/stop"},
+            "id": req_id,
+        }, None
+
+    if topic == "cmd/expression":
+        STATE["expression"] = payload.get("value", "neutral")
+        return {
+            "topic": "res/ack",
+            "payload": {"status": "ok", "cmd": "cmd/expression"},
+            "id": req_id,
+        }, None
+
+    if topic == "cmd/speaking":
+        STATE["speaking"] = bool(payload.get("value", False))
+        return {
+            "topic": "res/ack",
+            "payload": {"status": "ok", "cmd": "cmd/speaking"},
+            "id": req_id,
+        }, None
+
+    if topic == "cmd/sequence":
+        return {
+            "topic": "res/ack",
+            "payload": {"status": "ok", "cmd": "cmd/sequence"},
+            "id": req_id,
+        }, None
+
+    if topic == "cmd/home":
         STATE["expression"] = "neutral"
-        return {"t": "ack", "cmd": "home"}, None
-    if kind == "script_say":
+        return {
+            "topic": "res/ack",
+            "payload": {"status": "ok", "cmd": "cmd/home"},
+            "id": req_id,
+        }, None
+
+    if topic == "cmd/say":
+        text = payload.get("text", "")
         return (
-            {"t": "ack", "cmd": "script_say"},
-            {"t": "event", "event": "say", "detail": msg.get("text", "")},
+            {
+                "topic": "res/ack",
+                "payload": {"status": "ok", "cmd": "cmd/say"},
+                "id": req_id,
+            },
+            {
+                "topic": "event/say",
+                "payload": {"text": text},
+            },
         )
-    return {"t": "nack", "reason": "unknown_command", "got": kind}, None
+
+    return {
+        "topic": "res/nack",
+        "payload": {"status": "error", "reason": "unknown_topic", "got": topic},
+        "id": req_id,
+    }, None
 
 
 def parse_request(req):
@@ -169,9 +217,10 @@ def main():
             try:
                 data = sock.recv(256)
             except OSError as e:
-                if e.args[0] in (11, 115):  # EAGAIN (11), EWOULDBLOCK (11)
+                if e.args[0] in (11, 115):  # EAGAIN / EWOULDBLOCK
                     continue
                 data = b""
+
             if not data:
                 drop(client)
                 continue
@@ -191,7 +240,17 @@ def main():
                 if path == "/ws" and headers.get("upgrade", "").lower() == "websocket":
                     ws.handshake(sock, headers.get("sec-websocket-key", ""))
                     client["ws"] = True
-                    send_to(client, {"t": "hello", "proto": PROTOCOL_VERSION, "ip": ip})
+                    send_to(
+                        client,
+                        {
+                            "topic": "sys/hello",
+                            "payload": {
+                                "proto": PROTOCOL_VERSION,
+                                "ip": ip,
+                                "robot_id": "bot-001",
+                            },
+                        },
+                    )
                 else:
                     http_response(sock, status(wlan))
                     drop(client)
@@ -216,21 +275,28 @@ def main():
                 try:
                     msg = json.loads(payload)
                 except Exception:  # noqa: BLE001
-                    send_to(client, {"t": "nack", "reason": "bad_json"})
+                    send_to(
+                        client,
+                        {
+                            "topic": "res/nack",
+                            "payload": {"status": "error", "reason": "bad_json"},
+                        },
+                    )
                     continue
 
-                if msg.get("t") == "hb":
+                if msg.get("topic") == "sys/hb":
                     last_hb = now
 
                 reply, announce = handle_command(msg)
-                send_to(client, reply)
+                if reply is not None:
+                    send_to(client, reply)
                 if announce is not None:
                     broadcast(announce)
 
         if STATE["drive"] != "stop" and diff_ms(now, last_hb) > DEADMAN_MS:
             STATE["drive"] = "stop"
             STATE["speed"] = 0
-            broadcast({"t": "event", "event": "deadman_stop"})
+            broadcast({"topic": "event/deadman", "payload": {"state": "stopped"}})
 
         if diff_ms(now, last_tel) > TELEMETRY_MS:
             last_tel = now

@@ -4,7 +4,7 @@ import type { DriveDirection, EspMessage, Expression } from '@atbots/protocol';
 import { config } from '../config';
 import { voice } from '../voice';
 
-type Telemetry = Extract<EspMessage, { t: 'telemetry' }>;
+type Telemetry = Extract<EspMessage, { topic: 'telemetry' }>['payload'];
 
 export type RobotMode = 'mock' | 'esp';
 
@@ -39,7 +39,12 @@ class RobotStore {
 		this.#link = link;
 		this.#unsubs = [
 			link.onStatus((status) => (this.status = status)),
-			link.onMessage((message) => this.#onMessage(message))
+			link.onMessage((message) => this.#onMessage(message)),
+			link.onTopic('event/say', (payload) => {
+				if (payload.text) {
+					void this.#announce(payload.text);
+				}
+			})
 		];
 		link.connect();
 	}
@@ -52,43 +57,48 @@ class RobotStore {
 
 	setExpression(value: Expression): void {
 		this.expression = value;
-		this.#link.send({ t: 'set_expression', value });
+		this.#link.send({ topic: 'cmd/expression', payload: { value } });
 	}
 
 	setSpeaking(value: boolean): void {
 		this.speaking = value;
-		this.#link.send({ t: 'set_speaking', value });
+		this.#link.send({ topic: 'cmd/speaking', payload: { value } });
 	}
 
 	playSequence(name: string): void {
-		this.#link.send({ t: 'play_sequence', name });
+		this.#link.send({ topic: 'cmd/sequence', payload: { name } });
 	}
 
 	home(): void {
-		this.#link.send({ t: 'home' });
+		this.#link.send({ topic: 'cmd/home', payload: {} });
 	}
 
 	drive(dir: DriveDirection, speed: number): void {
-		this.#link.send({ t: 'drive', dir, speed });
+		this.#link.send({ topic: 'cmd/drive', payload: { dir, speed } });
 	}
 
 	stop(): void {
-		this.#link.send({ t: 'stop' });
+		this.#link.send({ topic: 'cmd/stop', payload: {} });
 	}
 
 	#onMessage(message: EspMessage): void {
-		if (message.t === 'telemetry') {
-			this.telemetry = message;
+		if (message.topic === 'telemetry') {
+			this.telemetry = message.payload;
 			return;
 		}
-		if (message.t === 'event') {
-			this.events = [
-				{ event: message.event, detail: message.detail, at: Date.now() },
-				...this.events
-			].slice(0, MAX_EVENTS);
-			if (message.event === 'say' && message.detail) {
-				void this.#announce(message.detail);
-			}
+		if (message.topic.startsWith('event/')) {
+			const eventType = message.topic.replace('event/', '');
+			const detail =
+				'text' in message.payload
+					? String(message.payload.text)
+					: 'state' in message.payload
+						? String(message.payload.state)
+						: undefined;
+
+			this.events = [{ event: eventType, detail, at: Date.now() }, ...this.events].slice(
+				0,
+				MAX_EVENTS
+			);
 		}
 	}
 

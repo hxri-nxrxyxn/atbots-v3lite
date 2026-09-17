@@ -8,7 +8,7 @@ import {
 
 import { config } from '../config';
 
-type Telemetry = Extract<EspMessage, { t: 'telemetry' }>;
+type Telemetry = Extract<EspMessage, { topic: 'telemetry' }>['payload'];
 
 export type RobotMode = 'mock' | 'esp';
 
@@ -48,7 +48,11 @@ class RobotStore {
 		// WebSocketEspLink heartbeats itself; the mock needs the app to do it.
 		if (this.mode === 'mock') {
 			this.#heartbeat = setInterval(
-				() => this.#link.send({ t: 'hb', seq: Date.now() }),
+				() =>
+					this.#link.send({
+						topic: 'sys/hb',
+						payload: { seq: Date.now() }
+					}),
 				HEARTBEAT_MS
 			);
 		}
@@ -68,48 +72,57 @@ class RobotStore {
 
 	drive(dir: DriveDirection, speed: number): void {
 		if (this.estop) return;
-		this.#link.send({ t: 'drive', dir, speed });
+		this.#link.send({ topic: 'cmd/drive', payload: { dir, speed } });
 	}
 
 	stop(): void {
-		this.#link.send({ t: 'stop' });
+		this.#link.send({ topic: 'cmd/stop', payload: {} });
 	}
 
 	setExpression(value: Expression): void {
-		this.#link.send({ t: 'set_expression', value });
+		this.#link.send({ topic: 'cmd/expression', payload: { value } });
 	}
 
 	setSpeaking(value: boolean): void {
-		this.#link.send({ t: 'set_speaking', value });
+		this.#link.send({ topic: 'cmd/speaking', payload: { value } });
 	}
 
 	playSequence(name: string): void {
-		this.#link.send({ t: 'play_sequence', name });
+		this.#link.send({ topic: 'cmd/sequence', payload: { name } });
 	}
 
 	home(): void {
-		this.#link.send({ t: 'home' });
+		this.#link.send({ topic: 'cmd/home', payload: {} });
 	}
 
-	scriptSay(text: string): void {
-		this.#link.send({ t: 'script_say', text });
+	scriptSay(text: string): Promise<unknown> {
+		// Use correlated request to ensure ESP received and broadcasted the announcement
+		return this.#link.request('cmd/say', { text });
 	}
 
 	toggleEstop(): void {
 		this.estop = !this.estop;
-		if (this.estop) this.#link.send({ t: 'stop' });
+		if (this.estop) this.#link.send({ topic: 'cmd/stop', payload: {} });
 	}
 
 	#onMessage(message: EspMessage): void {
-		if (message.t === 'telemetry') {
-			this.telemetry = message;
+		if (message.topic === 'telemetry') {
+			this.telemetry = message.payload;
 			return;
 		}
-		if (message.t === 'event') {
-			this.events = [
-				{ event: message.event, detail: message.detail, at: Date.now() },
-				...this.events
-			].slice(0, MAX_EVENTS);
+		if (message.topic.startsWith('event/')) {
+			const eventType = message.topic.replace('event/', '');
+			const detail =
+				'text' in message.payload
+					? String(message.payload.text)
+					: 'state' in message.payload
+						? String(message.payload.state)
+						: undefined;
+
+			this.events = [{ event: eventType, detail, at: Date.now() }, ...this.events].slice(
+				0,
+				MAX_EVENTS
+			);
 		}
 	}
 }

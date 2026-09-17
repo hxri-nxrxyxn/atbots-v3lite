@@ -64,15 +64,16 @@ real board: **Settings → Robot link → ESP8266 over Wi-Fi → `ws://<board-ip
 
 ```mermaid
 graph LR
-    TAB["Tablet app"] -->|WS /ws| ESP["ESP8266 / mock-esp"]
-    OP["Operator console"] -->|WS /ws| ESP
+    TAB["Tablet app"] -->|WS :80/ws<br/>(Topic envelopes)| ESP["ESP8266 / mock-esp"]
+    OP["Operator console"] -->|WS :80/ws<br/>(Topic envelopes)| ESP
     TAB -->|WSS relay| CLOUD["mock-cloud"]
     OP -->|HTTPS API| CLOUD
 ```
 
-- **JSON over WebSocket.** The ESP is the local hub; both apps connect to it.
-- **Script Mode** routes operator → ESP → tablet (the tablet speaks).
-- **Heartbeat** 5 Hz; **deadman** stops drive 500 ms after the last heartbeat.
+- **Topic & Payload Envelopes over WebSocket.** The ESP is the local hub; both apps connect to it using standardized topics (`cmd/drive`, `telemetry`, `event/say`).
+- **Script Mode** routes operator (`cmd/say`) → ESP → tablet (`event/say`); the tablet speaks.
+- **Correlated Handshakes:** Requests carry an `id` and await matching `res/ack` confirmations.
+- **Heartbeat** 5 Hz (`sys/hb`); **deadman** stops drive 500 ms after the last heartbeat (`event/deadman`).
 - The protocol is defined once in `packages/protocol` and documented in
   [`docs/protocol.md`](docs/protocol.md).
 

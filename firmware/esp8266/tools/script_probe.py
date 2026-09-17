@@ -1,10 +1,4 @@
-"""Two-client Script Mode probe.
-
-Connects two WebSocket clients to the robot, has client A send `script_say`,
-and checks that client B receives the `say` broadcast (operator -> ESP -> tablet).
-
-Usage: .venv/bin/python firmware/esp8266/tools/script_probe.py [ws://host/ws]
-"""
+"""Two-client Script Mode probe using Topic schema."""
 
 import json
 import sys
@@ -34,21 +28,27 @@ def main():
     drain(a, 0.5)
     drain(b, 0.5)
 
-    text = "Welcome to the event."
-    print("A ->", {"t": "script_say", "text": text})
-    a.send(json.dumps({"t": "script_say", "text": text}))
+    text = "Welcome to the topic-standardized event."
+    cmd = {"topic": "cmd/say", "payload": {"text": text}, "id": "say_101"}
+    print("A ->", cmd)
+    a.send(json.dumps(cmd))
 
     got_a = drain(a, 1.0)
     got_b = drain(b, 1.0)
 
-    ack = any(m.get("t") == "ack" and m.get("cmd") == "script_say" for m in got_a)
-    say = [m for m in got_b if m.get("t") == "event" and m.get("event") == "say"]
-    print("A received ack:", ack)
-    print("B received say:", say)
+    ack = any(
+        m.get("topic") == "res/ack" and m.get("id") == "say_101" for m in got_a
+    )
+    say = [m for m in got_b if m.get("topic") == "event/say"]
+
+    print("A received correlated ack:", ack)
+    print("B received say broadcast:", say)
 
     a.close()
     b.close()
-    print("PASS" if ack and say and say[0].get("detail") == text else "FAIL")
+
+    success = ack and len(say) > 0 and say[0].get("payload", {}).get("text") == text
+    print("PASS" if success else "FAIL")
 
 
 if __name__ == "__main__":
