@@ -9,6 +9,7 @@
 		"mock/*"
 	],
 	"scripts": {
+		"dev:all": "node scripts/dev-all.js",
 		"dev:tablet": "npm -w @atbots/tablet run dev",
 		"dev:operator": "npm -w @atbots/operator run dev",
 		"dev:esp": "npm -w @atbots/mock-esp run dev",

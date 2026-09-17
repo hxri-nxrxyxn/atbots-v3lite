@@ -49,6 +49,7 @@ real board: **Settings → Robot link → ESP8266 over Wi-Fi → `ws://<board-ip
 
 | Command | Description |
 |---|---|
+| `npm run dev:all` | Run all services simultaneously (cloud, esp, tablet, operator) |
 | `npm run dev:tablet` | Visitor app (`:5173`) |
 | `npm run dev:operator` | Operator console (`:5174` if the tablet is running) |
 | `npm run dev:esp` | Robot simulator (`:8765`) |

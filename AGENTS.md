@@ -10,6 +10,7 @@
 ## Commands
 
 - Install: `npm install` (repo root; npm workspaces).
+- Run all services: `npm run dev:all` (starts mock-cloud, mock-esp, tablet, and operator).
 - Dev apps: `npm run dev:tablet` / `npm run dev:operator`.
 - Mock servers: `npm run dev:esp` (ws://localhost:8765) / `npm run dev:cloud` (http://localhost:8787).
 - Build / check apps: `npm run build` / `npm run check`.
@@ -71,7 +72,7 @@ packages/protocol              message shapes, type guards, constants — single
 packages/link                  EspLink (WS) + MockEspLink + CloudClient
 mock/esp, mock/cloud           Node simulators
 firmware/esp8266               MicroPython
-docs/                          design doc, protocol.md, runbook.md
+docs/                          design doc, protocol.md, runbook.md, runbook.md
 ```
 
 - `packages/*` export TypeScript source directly (`exports: "./src/index.ts"`); there is no
