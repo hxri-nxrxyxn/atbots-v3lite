@@ -16,10 +16,12 @@
 	let driftY = $state(0);
 	let svgEl = $state<SVGSVGElement | undefined>(undefined);
 
-	// Expression parameters are tweened between targets so the face morphs
-	// rather than snapping. `proxy` is the GSAP target; `animated` drives the SVG.
-	const animated = $state({ ...FACE_PARAMS.neutral });
-	const proxy = { ...FACE_PARAMS.neutral };
+	// Plain JS numbers for animation targets
+	let eyeOpen = $state(FACE_PARAMS.neutral.eyeOpen);
+	let browYOffset = $state(FACE_PARAMS.neutral.browY);
+	let browTilt = $state(FACE_PARAMS.neutral.browTilt);
+	let mouthCurve = $state(FACE_PARAMS.neutral.mouthCurve);
+	let mouthRestOpen = $state(FACE_PARAMS.neutral.mouthOpen);
 
 	const prefersReducedMotion =
 		typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -27,17 +29,39 @@
 	$effect(() => {
 		const target = FACE_PARAMS[expression] ?? FACE_PARAMS.neutral;
 		if (prefersReducedMotion) {
-			Object.assign(animated, target);
+			eyeOpen = target.eyeOpen;
+			browYOffset = target.browY;
+			browTilt = target.browTilt;
+			mouthCurve = target.mouthCurve;
+			mouthRestOpen = target.mouthOpen;
 			return;
 		}
-		Object.assign(proxy, $state.snapshot(animated));
-		gsap.to(proxy, {
+
+		const animObj = {
+			eyeOpen,
+			browY: browYOffset,
+			browTilt,
+			mouthCurve,
+			mouthOpen: mouthRestOpen
+		};
+
+		const tween = gsap.to(animObj, {
 			...target,
 			duration: 0.4,
 			ease: 'power2.out',
 			overwrite: true,
-			onUpdate: () => Object.assign(animated, proxy)
+			onUpdate: () => {
+				eyeOpen = animObj.eyeOpen;
+				browYOffset = animObj.browY;
+				browTilt = animObj.browTilt;
+				mouthCurve = animObj.mouthCurve;
+				mouthRestOpen = animObj.mouthOpen;
+			}
 		});
+
+		return () => {
+			tween.kill();
+		};
 	});
 
 	$effect(() => {
@@ -88,13 +112,13 @@
 		return () => cancelAnimationFrame(frame);
 	});
 
-	const eyeRy = $derived(30 * animated.eyeOpen * blink);
-	const mouthOpen = $derived(Math.max(animated.mouthOpen, speaking ? mouthAnim : 0));
+	const eyeRy = $derived(30 * eyeOpen * blink);
+	const mouthOpen = $derived(Math.max(mouthRestOpen, speaking ? mouthAnim : 0));
 	const mouthTop = $derived(-2 - mouthOpen * 16);
-	const mouthBottom = $derived(animated.mouthCurve * 12 + mouthOpen * 18);
+	const mouthBottom = $derived(mouthCurve * 12 + mouthOpen * 18);
 	const mouthPath = $derived(`M -30 0 Q 0 ${mouthTop} 30 0 Q 0 ${mouthBottom} -30 0 Z`);
 
-	const browY = $derived(28 + animated.browY);
+	const browY = $derived(28 + browYOffset);
 </script>
 
 <svg
@@ -120,14 +144,14 @@
 			y1={browY}
 			x2="98"
 			y2={browY}
-			transform="rotate({animated.browTilt} 78 {browY})"
+			transform="rotate({browTilt} 78 {browY})"
 		/>
 		<line
 			x1="142"
 			y1={browY}
 			x2="182"
 			y2={browY}
-			transform="rotate({-animated.browTilt} 162 {browY})"
+			transform="rotate({-browTilt} 162 {browY})"
 		/>
 	</g>
 
