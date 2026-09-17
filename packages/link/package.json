@@ -1,0 +1,15 @@
+{
+	"name": "@atbots/link",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"dependencies": {
+		"@atbots/protocol": "*"
+	},
+	"scripts": {
+		"test": "vitest run"
+	}
+}
