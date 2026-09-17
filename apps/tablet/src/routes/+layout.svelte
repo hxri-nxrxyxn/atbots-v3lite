@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import favicon from '$lib/assets/favicon.svg';
-	import NumericKeypadDock from '$lib/components/NumericKeypadDock.svelte';
+	import KeyboardDock from '$lib/components/KeyboardDock.svelte';
 	import { onboarding } from '$lib/state/onboarding.svelte';
 	import { onMount, type Snippet } from 'svelte';
 	import '../app.css';
@@ -23,5 +23,5 @@
 
 {@render children()}
 
-<!-- Global Floating Bottom-Left Numeric Keypad -->
-<NumericKeypadDock />
+<!-- Global Floating Bottom-Left Keyboard Dock (Numeric & Alphanumeric) -->
+<KeyboardDock />

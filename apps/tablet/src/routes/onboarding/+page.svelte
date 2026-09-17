@@ -1,19 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { ArrowRight, CheckCircle2, Cpu, RefreshCw, Sparkles, Wifi, Zap } from '@lucide/svelte';
+	import { ArrowRight, CheckCircle2, Cpu, Sparkles, Zap } from '@lucide/svelte';
 
 	import NumericInput from '$lib/components/NumericInput.svelte';
+	import VirtualInput from '$lib/components/VirtualInput.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
 	import Face from '$lib/face/Face.svelte';
 	import { fadeIn, staggerIn } from '$lib/motion';
 	import { onboarding } from '$lib/state/onboarding.svelte';
 	import { robot } from '$lib/state/robot.svelte';
-	import { cn } from '$lib/utils';
 	import { voice } from '$lib/voice';
 
-	let step = $state(1); // 1: Welcome/Tenant, 2: Link/Diagnostics, 3: Completed
+	let step = $state(1);
 
 	// Step 1: Activation Form
 	let tenantCode = $state(onboarding.tenantCode);
@@ -75,14 +74,12 @@
 		<div class="flex items-center gap-2">
 			{#each [1, 2, 3] as s (s)}
 				<div
-					class={cn(
-						'flex size-7 items-center justify-center rounded-full text-xs font-mono font-semibold transition-all',
-						step === s
+					class={'flex size-7 items-center justify-center rounded-full text-xs font-mono font-semibold transition-all ' +
+						(step === s
 							? 'bg-brand text-brand-foreground shadow-xs'
 							: step > s
 								? 'bg-muted text-foreground'
-								: 'bg-muted/40 text-muted-foreground'
-					)}
+								: 'bg-muted/40 text-muted-foreground')}
 				>
 					{s}
 				</div>
@@ -100,7 +97,7 @@
 	<!-- Step Card Container -->
 	<div class="border-border bg-card/60 rounded-2xl border p-8 shadow-xl">
 		{#if step === 1}
-			<!-- STEP 1: Tenant & Robot Setup -->
+			<!-- STEP 1: Tenant & Robot Setup with Virtual Inputs -->
 			<div class="space-y-6" use:staggerIn>
 				<div class="flex items-center gap-5">
 					<Face expression="curious" class="h-16 w-26 shrink-0" />
@@ -113,30 +110,21 @@
 				</div>
 
 				<div class="space-y-4 pt-2">
-					<div>
-						<label
-							for="tenant-code-input"
-							class="text-xs text-muted-foreground font-medium block mb-1.5"
-						>
-							Tenant Organisation Code
-						</label>
-						<Input
-							id="tenant-code-input"
-							bind:value={tenantCode}
-							placeholder="e.g. SCHOOL-01"
-							class="font-mono"
-						/>
-					</div>
+					<VirtualInput
+						label="Tenant Organisation Code"
+						mode="alphanumeric"
+						bind:value={tenantCode}
+						placeholder="e.g. SCHOOL-01"
+						maxlength={32}
+					/>
 
-					<div>
-						<label
-							for="robot-name-input"
-							class="text-xs text-muted-foreground font-medium block mb-1.5"
-						>
-							Robot Name
-						</label>
-						<Input id="robot-name-input" bind:value={robotName} placeholder="e.g. Aria" />
-					</div>
+					<VirtualInput
+						label="Robot Call Name"
+						mode="alphanumeric"
+						bind:value={robotName}
+						placeholder="e.g. Aria"
+						maxlength={24}
+					/>
 
 					<div class="pt-2">
 						<NumericInput
@@ -185,8 +173,8 @@
 								</div>
 							</div>
 						</div>
-						<span class="text-xs font-mono text-emerald-400 font-medium">
-							{robot.status === 'open' ? '✔ READY' : 'CONNECTING'}
+						<span class="text-xs font-mono text-foreground font-medium">
+							{robot.status === 'open' ? 'READY' : 'CONNECTING'}
 						</span>
 					</div>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
-	import NumericKeypadDock from '$lib/components/NumericKeypadDock.svelte';
+	import KeyboardDock from '$lib/components/KeyboardDock.svelte';
 	import type { Snippet } from 'svelte';
 	import '../app.css';
 
@@ -13,5 +13,5 @@
 
 {@render children()}
 
-<!-- Global Floating Bottom-Left Numeric Keypad -->
-<NumericKeypadDock />
+<!-- Global Floating Bottom-Left Keyboard Dock (Numeric & Alphanumeric) -->
+<KeyboardDock />

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { Bot, ShieldCheck } from '@lucide/svelte';
-	import NumericKeypadDock from '$lib/components/NumericKeypadDock.svelte';
+	import KeyboardDock from '$lib/components/KeyboardDock.svelte';
 
 	let { children }: { children: Snippet } = $props();
 </script>
@@ -38,5 +38,5 @@
 	</footer>
 </div>
 
-<!-- Global Bottom-Left Floating Keypad Dock for Onboarding -->
-<NumericKeypadDock />
+<!-- Global Bottom-Left Floating Keyboard Dock for Onboarding -->
+<KeyboardDock />
