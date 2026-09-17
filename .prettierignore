@@ -1,0 +1,10 @@
+node_modules
+build
+dist
+.svelte-kit
+.output
+coverage
+package-lock.json
+pnpm-lock.yaml
+*.md
+!AGENTS.md

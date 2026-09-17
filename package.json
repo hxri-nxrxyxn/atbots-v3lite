@@ -1,0 +1,31 @@
+{
+	"name": "atbots-v3lite",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"apps/*",
+		"packages/*",
+		"mock/*"
+	],
+	"scripts": {
+		"dev:tablet": "npm -w @atbots/tablet run dev",
+		"dev:operator": "npm -w @atbots/operator run dev",
+		"dev:esp": "npm -w @atbots/mock-esp run dev",
+		"dev:cloud": "npm -w @atbots/mock-cloud run dev",
+		"build": "npm -w @atbots/tablet run build && npm -w @atbots/operator run build",
+		"check": "npm -w @atbots/tablet run check && npm -w @atbots/operator run check",
+		"typecheck": "tsc -p packages/protocol --noEmit && tsc -p packages/link --noEmit && tsc -p mock/esp --noEmit && tsc -p mock/cloud --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
+	},
+	"devDependencies": {
+		"@types/node": "^24.10.1",
+		"prettier": "^3.6.2",
+		"prettier-plugin-svelte": "^3.4.0",
+		"tsx": "^4.20.6",
+		"vitest": "^4.0.18"
+	}
+}
