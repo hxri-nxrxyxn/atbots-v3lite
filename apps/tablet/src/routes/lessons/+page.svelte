@@ -1,7 +1,15 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { Lesson, LessonSection } from '@atbots/protocol';
-	import { ArrowLeft, BookOpen, ChevronRight, CircleStop, Clock, Volume2 } from '@lucide/svelte';
+	import {
+		ArrowLeft,
+		BookOpen,
+		ChevronLeft,
+		ChevronRight,
+		CircleStop,
+		Clock,
+		Volume2
+	} from '@lucide/svelte';
 
 	import { Button } from '$lib/components/ui/button';
 	import { SAMPLE_LESSONS } from '$lib/data/education';
@@ -79,7 +87,7 @@
 				<div class="text-sm font-semibold tracking-tight">
 					{selectedLesson ? selectedLesson.title : 'Lessons'}
 				</div>
-				<p class="text-muted-foreground text-xs">
+				<p class="text-muted-foreground text-xs font-mono">
 					{selectedLesson
 						? `Category: ${selectedLesson.category}`
 						: 'Interactive reading & robot narration'}
@@ -88,7 +96,7 @@
 		</div>
 
 		{#if speaking}
-			<Button variant="outline" size="sm" class="gap-1.5" onclick={stopVoice}>
+			<Button variant="outline" size="sm" class="gap-1.5 font-mono text-xs" onclick={stopVoice}>
 				<CircleStop class="size-3.5" />
 				Stop Voice
 			</Button>
@@ -146,111 +154,120 @@
 			</div>
 		</div>
 	{:else}
-		<!-- Active Lesson Reader -->
+		<!-- Active Lesson Reader (Optimized for Tablet & Touch Dimensions) -->
 		<div
-			class="mx-auto grid w-full max-w-5xl flex-1 grid-cols-1 gap-8 px-6 py-8 md:grid-cols-12"
+			class="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-between gap-6 px-6 py-6"
 			use:fadeIn
 		>
-			<!-- Section Navigation Sidebar -->
-			<aside class="space-y-4 md:col-span-4">
-				<div class="border-border/70 flex items-center gap-3 border-b pb-4">
-					<Face
-						expression={speaking ? 'speaking' : 'listening'}
-						{speaking}
-						class="h-10 w-16 shrink-0"
-					/>
-					<div class="text-xs">
-						<span class="font-semibold tracking-tight text-foreground block">Contents</span>
-						<span class="text-muted-foreground font-mono">
-							{activeSectionIndex + 1} of {selectedLesson.sections.length} sections
-						</span>
-					</div>
-				</div>
-
-				<nav class="space-y-1">
+			<div class="space-y-6">
+				<!-- Section Horizontal Step Switcher -->
+				<div
+					class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border/70 no-scrollbar"
+				>
 					{#each selectedLesson.sections as section, idx (section.heading)}
 						{@const isActive = activeSectionIndex === idx}
 						<button
 							type="button"
 							onclick={() => selectSection(idx)}
 							class={cn(
-								'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors',
+								'flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-medium transition-all',
 								isActive
-									? 'bg-secondary font-medium text-secondary-foreground border border-border/80'
-									: 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+									? 'bg-secondary text-secondary-foreground border border-border/80 shadow-xs'
+									: 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
 							)}
 						>
-							<span class="truncate font-medium">{section.heading}</span>
-							<ChevronRight class="size-3.5 opacity-50 shrink-0 ml-2" />
+							<span class="font-mono text-[10px] opacity-70">0{idx + 1}</span>
+							<span class="truncate max-w-[200px]">{section.heading}</span>
 						</button>
 					{/each}
-				</nav>
-			</aside>
+				</div>
 
-			<!-- Main Article View -->
-			<main class="space-y-8 md:col-span-8">
-				{#if activeSection}
-					<article class="space-y-6">
-						<div class="flex items-start justify-between gap-4 border-b border-border/70 pb-4">
-							<h2 class="scroll-m-20 text-xl font-semibold tracking-tight">
-								{activeSection.heading}
+				<!-- Header Card with Face & Speak Button -->
+				<div class="flex items-center justify-between border-b border-border/70 pb-5">
+					<div class="flex items-center gap-4">
+						<Face
+							expression={speaking ? 'speaking' : 'listening'}
+							{speaking}
+							class="h-12 w-20 shrink-0"
+						/>
+						<div>
+							<span class="text-muted-foreground font-mono text-xs uppercase tracking-wider block">
+								Section {activeSectionIndex + 1} of {selectedLesson.sections.length}
+							</span>
+							<h2 class="scroll-m-20 text-xl font-bold tracking-tight mt-0.5">
+								{activeSection?.heading}
 							</h2>
-							<Button
-								variant="outline"
-								size="sm"
-								class="gap-1.5 text-xs font-medium shrink-0"
-								onclick={() => readSection(activeSection)}
-							>
-								<Volume2 class="size-3.5" />
-								Listen
-							</Button>
 						</div>
+					</div>
 
-						<div class="space-y-4 text-sm leading-7 text-foreground/90">
-							<p>
-								{activeSection.content}
-							</p>
-						</div>
+					{#if activeSection}
+						<Button
+							variant="outline"
+							size="sm"
+							class="gap-1.5 text-xs font-mono shrink-0"
+							onclick={() => readSection(activeSection)}
+						>
+							<Volume2 class="size-3.5" />
+							{speaking ? 'Replay' : 'Listen'}
+						</Button>
+					{/if}
+				</div>
+
+				<!-- Article Content -->
+				{#if activeSection}
+					<div class="space-y-6">
+						<p class="text-foreground/90 text-base leading-8 font-normal">
+							{activeSection.content}
+						</p>
 
 						{#if activeSection.speechScript}
 							<blockquote
-								class="mt-6 border-l-2 border-border pl-4 italic text-sm text-muted-foreground"
+								class="border-l-2 border-border pl-4 text-sm text-muted-foreground leading-relaxed"
 							>
 								<span
-									class="not-italic font-semibold text-foreground text-xs uppercase tracking-wider block mb-1 font-mono"
+									class="font-mono text-[10px] uppercase tracking-wider font-semibold text-foreground/80 block mb-1"
 								>
-									Key Takeaway
+									Robot Narration
 								</span>
 								"{activeSection.speechScript}"
 							</blockquote>
 						{/if}
-					</article>
-
-					<!-- Bottom Navigation Between Sections -->
-					<footer class="flex items-center justify-between border-t border-border/70 pt-6">
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={activeSectionIndex === 0}
-							onclick={() => selectSection(activeSectionIndex - 1)}
-						>
-							Previous
-						</Button>
-
-						<div class="text-xs text-muted-foreground font-mono">
-							{activeSectionIndex + 1} / {selectedLesson.sections.length}
-						</div>
-
-						{#if activeSectionIndex + 1 < selectedLesson.sections.length}
-							<Button size="sm" onclick={() => selectSection(activeSectionIndex + 1)}>
-								Next Section
-							</Button>
-						{:else}
-							<Button size="sm" variant="secondary" onclick={backToCatalog}>Complete Lesson</Button>
-						{/if}
-					</footer>
+					</div>
 				{/if}
-			</main>
+			</div>
+
+			<!-- Bottom Touch Navigation Footer -->
+			<footer class="flex items-center justify-between border-t border-border/70 pt-4">
+				<Button
+					variant="outline"
+					size="sm"
+					class="gap-1.5 text-xs font-medium"
+					disabled={activeSectionIndex === 0}
+					onclick={() => selectSection(activeSectionIndex - 1)}
+				>
+					<ChevronLeft class="size-4" />
+					Previous
+				</Button>
+
+				<span class="text-xs text-muted-foreground font-mono">
+					{activeSectionIndex + 1} / {selectedLesson.sections.length}
+				</span>
+
+				{#if activeSectionIndex + 1 < selectedLesson.sections.length}
+					<Button
+						size="sm"
+						class="gap-1.5 text-xs font-medium"
+						onclick={() => selectSection(activeSectionIndex + 1)}
+					>
+						Next
+						<ChevronRight class="size-4" />
+					</Button>
+				{:else}
+					<Button size="sm" variant="secondary" class="text-xs font-medium" onclick={backToCatalog}>
+						Complete Module
+					</Button>
+				{/if}
+			</footer>
 		</div>
 	{/if}
 </div>

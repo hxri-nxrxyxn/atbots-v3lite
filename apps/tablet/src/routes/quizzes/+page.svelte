@@ -1,16 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import type { Quiz, QuizQuestion } from '@atbots/protocol';
-	import {
-		ArrowLeft,
-		CheckCircle2,
-		CircleStop,
-		HelpCircle,
-		ListChecks,
-		RotateCcw,
-		Volume2,
-		XCircle
-	} from '@lucide/svelte';
+	import { ArrowLeft, CheckCircle2, CircleStop, RotateCcw, Volume2, XCircle } from '@lucide/svelte';
 
 	import { Button } from '$lib/components/ui/button';
 	import { SAMPLE_QUIZZES } from '$lib/data/education';
@@ -19,6 +9,7 @@
 	import { robot } from '$lib/state/robot.svelte';
 	import { cn } from '$lib/utils';
 	import { voice } from '$lib/voice';
+	import type { Quiz } from '@atbots/protocol';
 
 	let selectedQuiz = $state<Quiz | null>(null);
 	let currentQuestionIndex = $state(0);
@@ -126,7 +117,7 @@
 </script>
 
 <svelte:head>
-	<title>AT Bots — Interactive Quizzes</title>
+	<title>AT Bots — Quizzes</title>
 </svelte:head>
 
 <div class="flex min-h-dvh flex-col">
@@ -142,17 +133,17 @@
 				<ArrowLeft class="size-4" />
 			</Button>
 			<div>
-				<div class="text-sm font-medium">
-					{selectedQuiz ? selectedQuiz.title : 'Interactive Quizzes'}
+				<div class="text-sm font-semibold tracking-tight">
+					{selectedQuiz ? selectedQuiz.title : 'Quizzes'}
 				</div>
-				<div class="text-muted-foreground text-xs">
-					{selectedQuiz ? `Category: ${selectedQuiz.category}` : 'Offline educational challenge'}
-				</div>
+				<p class="text-muted-foreground text-xs font-mono">
+					{selectedQuiz ? `Category: ${selectedQuiz.category}` : 'Offline knowledge challenge'}
+				</p>
 			</div>
 		</div>
 
 		{#if speaking}
-			<Button variant="outline" size="sm" class="gap-1.5" onclick={stopSpeaking}>
+			<Button variant="outline" size="sm" class="gap-1.5 font-mono text-xs" onclick={stopSpeaking}>
 				<CircleStop class="size-3.5" />
 				Stop Voice
 			</Button>
@@ -161,28 +152,28 @@
 
 	{#if !selectedQuiz}
 		<!-- Quiz Catalog Selection -->
-		<div class="mx-auto w-full max-w-4xl flex-1 space-y-8 px-6 py-8" use:staggerIn>
-			<div class="flex items-center gap-5">
+		<div class="mx-auto w-full max-w-4xl flex-1 space-y-10 px-6 py-10" use:staggerIn>
+			<div class="flex items-center gap-6">
 				<Face expression="curious" class="h-14 w-24 shrink-0" />
 				<div>
-					<h1 class="text-xl font-semibold">Choose a Quiz</h1>
-					<p class="text-muted-foreground mt-1 text-sm">
-						Test your knowledge with immediate audio explanations and scoring.
+					<h1 class="scroll-m-20 text-2xl font-bold tracking-tight">Quiz Library</h1>
+					<p class="text-muted-foreground text-sm leading-relaxed mt-1">
+						Test your knowledge with immediate audio feedback, scoring, and explanations.
 					</p>
 				</div>
 			</div>
 
-			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			<div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
 				{#each SAMPLE_QUIZZES as quiz (quiz.id)}
 					<button
 						type="button"
-						class="border-border bg-card/40 hover:border-brand/50 hover:bg-card flex flex-col justify-between rounded-xl border p-6 text-left transition-all"
+						class="border-border bg-card/40 hover:border-foreground/30 hover:bg-card flex flex-col justify-between rounded-xl border p-6 text-left transition-all group"
 						onclick={() => startQuiz(quiz)}
 					>
-						<div>
+						<div class="space-y-3">
 							<div class="flex items-center justify-between">
 								<span
-									class="bg-brand/15 text-brand rounded-md px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider"
+									class="bg-muted text-foreground/80 rounded-md px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider font-mono"
 								>
 									{quiz.category}
 								</span>
@@ -190,14 +181,18 @@
 									{quiz.questions.length} questions
 								</span>
 							</div>
-							<h2 class="mt-4 text-base font-semibold">{quiz.title}</h2>
-							<p class="text-muted-foreground mt-2 text-sm leading-relaxed">
+							<h2 class="text-lg font-semibold tracking-tight group-hover:text-foreground">
+								{quiz.title}
+							</h2>
+							<p class="text-muted-foreground text-sm leading-normal">
 								{quiz.description}
 							</p>
 						</div>
 
-						<div class="text-brand mt-6 flex items-center gap-1.5 text-xs font-medium">
-							Start Quiz →
+						<div
+							class="text-foreground/80 font-mono mt-6 flex items-center gap-1.5 text-xs font-medium"
+						>
+							Start quiz <span class="transition-transform group-hover:translate-x-0.5">→</span>
 						</div>
 					</button>
 				{/each}
@@ -209,27 +204,33 @@
 			class="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 py-12"
 			use:fadeIn
 		>
-			<div class="border-border bg-card/40 w-full rounded-2xl border p-8 text-center">
+			<div class="border-border bg-card/40 w-full rounded-2xl border p-8 text-center space-y-6">
 				<div class="flex justify-center">
-					<Face expression={faceExpression} {speaking} class="h-28 w-44" />
+					<Face expression={faceExpression} {speaking} class="h-24 w-40" />
 				</div>
 
-				<h2 class="mt-6 text-2xl font-bold">Quiz Completed!</h2>
-				<p class="text-muted-foreground mt-2 text-sm">
-					You scored <span class="text-foreground font-mono font-bold">{score}</span> out of
-					<span class="text-foreground font-mono font-bold">{selectedQuiz.questions.length}</span>.
-				</p>
+				<div>
+					<h2 class="scroll-m-20 text-2xl font-bold tracking-tight">Quiz Completed</h2>
+					<p class="text-muted-foreground text-sm mt-2">
+						You scored <span class="text-foreground font-mono font-semibold">{score}</span> of
+						<span class="text-foreground font-mono font-semibold"
+							>{selectedQuiz.questions.length}</span
+						>
+					</p>
+				</div>
 
-				<div class="mt-6 rounded-xl border border-border/80 bg-muted/30 p-4 text-sm font-mono">
+				<div
+					class="rounded-xl border border-border bg-muted/40 p-4 text-xs font-mono text-muted-foreground"
+				>
 					Accuracy: {Math.round((score / selectedQuiz.questions.length) * 100)}%
 				</div>
 
-				<div class="mt-8 flex gap-3">
-					<Button variant="outline" class="flex-1 gap-1.5" onclick={resetQuiz}>
-						<RotateCcw class="size-4" />
-						Retry Quiz
+				<div class="flex gap-3 pt-2">
+					<Button variant="outline" class="flex-1 gap-1.5 text-xs font-medium" onclick={resetQuiz}>
+						<RotateCcw class="size-3.5" />
+						Retry
 					</Button>
-					<Button class="flex-1" onclick={backToCatalog}>Choose Another</Button>
+					<Button class="flex-1 text-xs font-medium" onclick={backToCatalog}>All Quizzes</Button>
 				</div>
 			</div>
 		</div>
@@ -241,21 +242,21 @@
 		>
 			<div class="space-y-6">
 				<!-- Progress Bar & Question Counter -->
-				<div class="flex items-center justify-between text-xs text-muted-foreground">
+				<div class="flex items-center justify-between text-xs text-muted-foreground font-mono">
 					<span>Question {currentQuestionIndex + 1} of {selectedQuiz.questions.length}</span>
-					<span class="font-mono">Score: {score}</span>
+					<span>Score: {score}</span>
 				</div>
-				<div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+				<div class="h-1 w-full overflow-hidden rounded-full bg-muted">
 					<div
-						class="h-full bg-brand transition-all duration-300"
+						class="h-full bg-foreground/80 transition-all duration-300"
 						style="width: {((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100}%"
 					></div>
 				</div>
 
 				<!-- Top Expression & Question Card -->
-				<div class="flex items-center gap-4 border-b border-border/60 pb-6">
-					<Face expression={faceExpression} {speaking} class="h-16 w-28 shrink-0" />
-					<h2 class="text-lg font-medium leading-snug">
+				<div class="flex items-center gap-5 border-b border-border/70 pb-6">
+					<Face expression={faceExpression} {speaking} class="h-14 w-24 shrink-0" />
+					<h2 class="scroll-m-20 text-lg font-semibold tracking-tight leading-snug">
 						{currentQuestion.question}
 					</h2>
 				</div>
@@ -273,25 +274,27 @@
 								'flex items-center justify-between rounded-xl border p-4 text-left text-sm transition-all',
 								!isAnswerSubmitted &&
 									isSelected &&
-									'border-brand bg-brand/10 font-medium text-foreground',
+									'border-brand bg-brand/10 font-medium text-foreground ring-1 ring-brand/50',
 								!isAnswerSubmitted &&
 									!isSelected &&
 									'border-border bg-card/40 hover:border-foreground/30 hover:bg-card',
 								isAnswerSubmitted &&
 									isThisCorrect &&
-									'border-emerald-500/60 bg-emerald-500/10 text-emerald-400 font-medium',
+									'border-foreground/60 bg-muted/60 text-foreground font-medium',
 								isAnswerSubmitted &&
 									isSelected &&
 									!isThisCorrect &&
 									'border-destructive/60 bg-destructive/10 text-destructive',
-								isAnswerSubmitted && !isSelected && !isThisCorrect && 'border-border/50 opacity-40'
+								isAnswerSubmitted && !isSelected && !isThisCorrect && 'border-border/40 opacity-40'
 							)}
 						>
 							<div class="flex items-center gap-3">
 								<span
 									class={cn(
-										'flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-mono uppercase',
-										isSelected ? 'border-current' : 'border-border text-muted-foreground'
+										'flex size-6 shrink-0 items-center justify-center rounded-md border text-xs font-mono uppercase',
+										isSelected
+											? 'border-current text-foreground'
+											: 'border-border text-muted-foreground'
 									)}
 								>
 									{option.id}
@@ -300,9 +303,9 @@
 							</div>
 
 							{#if isAnswerSubmitted && isThisCorrect}
-								<CheckCircle2 class="size-5 text-emerald-400" />
+								<CheckCircle2 class="size-4 text-foreground" />
 							{:else if isAnswerSubmitted && isSelected && !isThisCorrect}
-								<XCircle class="size-5 text-destructive" />
+								<XCircle class="size-4 text-destructive" />
 							{/if}
 						</button>
 					{/each}
@@ -311,18 +314,15 @@
 				<!-- Explanation Box (revealed on submit) -->
 				{#if isAnswerSubmitted}
 					<div
-						class={cn(
-							'rounded-xl border p-4 text-sm leading-relaxed',
-							isCorrect
-								? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-								: 'border-border bg-card/60 text-muted-foreground'
-						)}
+						class={cn('rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed')}
 						use:fadeIn
 					>
-						<p class="font-medium text-foreground mb-1">
-							{isCorrect ? '✔ Correct!' : '✖ Explanation:'}
-						</p>
-						<p>{currentQuestion.explanation}</p>
+						<span
+							class="font-semibold text-xs font-mono uppercase tracking-wider block mb-1 text-foreground"
+						>
+							{isCorrect ? 'Correct' : 'Explanation'}
+						</span>
+						<p class="text-muted-foreground text-sm">{currentQuestion.explanation}</p>
 					</div>
 				{/if}
 			</div>
@@ -332,19 +332,23 @@
 				<Button
 					variant="ghost"
 					size="sm"
-					class="gap-1.5 text-muted-foreground"
+					class="gap-1.5 text-xs text-muted-foreground font-mono"
 					onclick={() => readAloud(currentQuestion.question)}
 				>
-					<Volume2 class="size-4" />
-					Repeat Question
+					<Volume2 class="size-3.5" />
+					Repeat
 				</Button>
 
 				{#if !isAnswerSubmitted}
-					<Button disabled={!selectedOptionId} onclick={submitAnswer} class="px-6">
+					<Button
+						disabled={!selectedOptionId}
+						onclick={submitAnswer}
+						class="px-6 text-xs font-medium"
+					>
 						Submit Answer
 					</Button>
 				{:else}
-					<Button onclick={nextQuestion} class="px-6">
+					<Button onclick={nextQuestion} class="px-6 text-xs font-medium">
 						{currentQuestionIndex + 1 < selectedQuiz.questions.length
 							? 'Next Question →'
 							: 'View Results →'}
