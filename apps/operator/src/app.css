@@ -137,4 +137,17 @@
 	::selection {
 		background: color-mix(in oklch, var(--brand), transparent 65%);
 	}
+
+	/* Globally hide scrollbars while maintaining full touch & wheel scrollability */
+	html,
+	body,
+	* {
+		scrollbar-width: none; /* Firefox */
+		-ms-overflow-style: none; /* IE / Edge */
+	}
+	*::-webkit-scrollbar {
+		display: none; /* Chrome, Safari, Edge, WebKit */
+		width: 0px;
+		height: 0px;
+	}
 }
