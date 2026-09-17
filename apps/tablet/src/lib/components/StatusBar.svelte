@@ -20,25 +20,29 @@
 	const time = $derived(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 </script>
 
-<header class="border-border/70 flex items-center justify-between border-b px-8 py-4">
-	<div class="flex items-center gap-2">
-		<span class="text-muted-foreground text-xs font-semibold"> AT Bots </span>
+<header
+	class="border-border/70 flex h-14 shrink-0 items-center justify-between border-b px-6 bg-background/95 backdrop-blur-sm select-none"
+>
+	<div class="flex items-center gap-3">
+		<span class="text-xs font-semibold tracking-tight text-foreground font-mono">
+			AT Bots V3 Lite
+		</span>
 	</div>
 
 	<div class="flex items-center gap-4">
 		<span
 			class={cn(
-				'flex items-center gap-2 rounded-full border px-3 py-1 text-xs',
-				connected ? 'border-border text-foreground/80' : 'border-border text-muted-foreground'
+				'flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-mono',
+				connected ? 'border-border text-foreground/90' : 'border-border text-muted-foreground'
 			)}
 		>
 			{#if connected}
-				<Wifi class="size-3.5" />
+				<Wifi class="size-3.5 text-brand" />
 			{:else}
 				<WifiOff class="size-3.5" />
 			{/if}
 			{label}
 		</span>
-		<span class="text-foreground/90 font-mono text-sm tabular-nums">{time}</span>
+		<span class="text-foreground/90 font-mono text-sm tabular-nums font-semibold">{time}</span>
 	</div>
 </header>

@@ -22,25 +22,40 @@
 		{
 			href: '/session',
 			title: 'Speak with AI',
-			description: 'Start a conversation',
+			description: 'Interactive natural language session',
 			icon: Sparkles,
 			primary: true
 		},
-		{ href: '/games', title: 'Games', description: 'Interactive activities', icon: Gamepad2 },
+		{
+			href: '/quizzes',
+			title: 'Quizzes',
+			description: 'Test your knowledge with immediate feedback',
+			icon: ListChecks
+		},
 		{
 			href: '/lessons',
 			title: 'Lessons',
-			description: 'Guided learning',
+			description: 'Guided STEM & robotics reading modules',
 			icon: GraduationCap
 		},
-		{ href: '/quizzes', title: 'Quizzes', description: 'Test your knowledge', icon: ListChecks },
+		{
+			href: '/games',
+			title: 'Games',
+			description: 'Tactile activities & memory training',
+			icon: Gamepad2
+		},
 		{
 			href: '/manual',
 			title: 'Manual mode',
-			description: 'Robot status and controls',
+			description: 'Hardware telemetry and status controls',
 			icon: Hand
 		},
-		{ href: '/settings', title: 'Settings', description: 'Connection and voice', icon: Settings }
+		{
+			href: '/settings',
+			title: 'Settings',
+			description: 'Robot link, voice engine, and commissioning',
+			icon: Settings
+		}
 	];
 
 	onMount(() => {
@@ -48,19 +63,33 @@
 	});
 </script>
 
-<div class="flex min-h-dvh flex-col">
+<svelte:head>
+	<title>AT Bots — Home</title>
+</svelte:head>
+
+<div class="flex h-full flex-col">
 	<StatusBar />
 
-	<div class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-8 py-10">
-		<header class="flex items-center gap-5" use:fadeIn>
-			<Face expression={robot.expression} speaking={robot.speaking} class="h-14 w-24 shrink-0" />
+	<!-- Portrait Kiosk Content Frame -->
+	<main class="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-between px-6 py-8">
+		<!-- Hero Branding & Face Header -->
+		<header class="flex items-center gap-6 border-b border-border/70 pb-6" use:fadeIn>
+			<Face expression={robot.expression} speaking={robot.speaking} class="h-20 w-32 shrink-0" />
 			<div>
-				<h1 class="text-2xl font-semibold tracking-tight">AT Bots</h1>
-				<p class="text-muted-foreground text-sm">Interactive assistant · V3 Lite</p>
+				<span
+					class="text-xs font-mono font-medium text-muted-foreground uppercase tracking-wider block"
+				>
+					Receptionist & Host Platform
+				</span>
+				<h1 class="text-2xl font-bold tracking-tight text-foreground mt-0.5">Welcome to AT Bots</h1>
+				<p class="text-muted-foreground text-xs mt-1 leading-relaxed">
+					Touch any module below to start an interactive experience.
+				</p>
 			</div>
 		</header>
 
-		<div class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" use:staggerIn>
+		<!-- 2-Column Portrait Optimized Grid -->
+		<div class="grid grid-cols-2 gap-4 py-6" use:staggerIn>
 			{#each modes as mode (mode.href)}
 				<ModeTile
 					href={mode.href}
@@ -72,8 +101,11 @@
 			{/each}
 		</div>
 
-		<p class="text-muted-foreground text-center text-xs" use:fadeIn={{ delay: 0.25 }}>
-			Touch a mode to begin · Please use with adult supervision
-		</p>
-	</div>
+		<!-- Footer Notice -->
+		<footer
+			class="border-t border-border/70 pt-4 text-center text-[11px] text-muted-foreground font-mono"
+		>
+			Touch to begin · Supervised kiosk engagement platform
+		</footer>
+	</main>
 </div>

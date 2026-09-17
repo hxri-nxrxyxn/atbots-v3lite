@@ -25,23 +25,24 @@
 <a
 	href={resolve(href)}
 	class={cn(
-		'group bg-card/40 focus-visible:ring-ring/40 flex min-h-40 flex-col justify-between rounded-xl border p-5 outline-none transition-colors focus-visible:ring-3',
+		'group bg-card/40 focus-visible:ring-ring/40 flex flex-col justify-between rounded-xl border p-6 outline-none transition-all select-none focus-visible:ring-3',
+		'min-h-[160px]',
 		primary
-			? 'border-brand/40 hover:border-brand/70 hover:bg-card'
-			: 'border-border hover:border-foreground/20 hover:bg-card'
+			? 'border-brand/50 hover:border-brand bg-card hover:bg-card/90 shadow-md'
+			: 'border-border hover:border-foreground/30 hover:bg-card'
 	)}
 >
 	<span
 		class={cn(
-			'flex size-10 items-center justify-center rounded-lg',
+			'flex size-11 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
 			primary ? 'bg-brand/15 text-brand' : 'bg-muted text-foreground/80'
 		)}
 	>
 		<Icon class="size-5" />
 	</span>
 
-	<span class="mt-6 block">
-		<span class="block text-base font-medium">{title}</span>
-		<span class="text-muted-foreground mt-1 block text-sm">{description}</span>
-	</span>
+	<div class="mt-6">
+		<h2 class="text-base font-semibold tracking-tight text-foreground">{title}</h2>
+		<p class="text-muted-foreground mt-1 text-xs leading-relaxed">{description}</p>
+	</div>
 </a>

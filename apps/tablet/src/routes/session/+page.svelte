@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { ArrowLeft, CircleStop, Mic, Send } from '@lucide/svelte';
+	import { CircleStop, Mic, Send } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 
+	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Face from '$lib/face/Face.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -59,50 +60,61 @@
 	}
 </script>
 
-<div class="flex h-dvh flex-col">
-	<header class="border-border/70 flex items-center justify-between border-b px-6 py-3">
-		<div class="flex items-center gap-3">
-			<Button href={resolve('/')} variant="ghost" size="icon-sm" aria-label="Back to home">
-				<ArrowLeft class="size-4" />
-			</Button>
-			<span class="text-sm font-medium">Conversation</span>
+<svelte:head>
+	<title>AT Bots — Conversation</title>
+</svelte:head>
+
+<div class="flex h-full flex-col">
+	<PageHeader title="Conversation" subtitle="Visitor natural language session">
+		{#snippet actions()}
+			<div class="flex items-center gap-3">
+				<span class="text-muted-foreground flex items-center gap-2 text-xs font-mono">
+					<span
+						class={cn(
+							'size-2 rounded-full',
+							session.phase === 'error'
+								? 'bg-destructive'
+								: session.phase === 'idle'
+									? 'bg-muted-foreground'
+									: 'bg-brand'
+						)}
+					></span>
+					{phaseLabels[session.phase]}
+				</span>
+
+				{#if session.phase === 'speaking'}
+					<Button
+						variant="outline"
+						size="sm"
+						class="gap-1.5 font-mono text-xs"
+						onclick={() => session.stopSpeaking()}
+					>
+						<CircleStop class="size-3.5" />
+						Stop
+					</Button>
+				{/if}
+			</div>
+		{/snippet}
+	</PageHeader>
+
+	<!-- Portrait Screen Layout -->
+	<main
+		class="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-between overflow-hidden px-6 py-6 gap-5"
+	>
+		<!-- Big Animated Face -->
+		<div class="flex justify-center shrink-0" use:fadeIn={{ scale: 0.96, duration: 0.6 }}>
+			<Face expression={faceExpression} speaking={session.phase === 'speaking'} class="h-44 w-72" />
 		</div>
 
-		<div class="flex items-center gap-3">
-			<span class="text-muted-foreground flex items-center gap-2 text-xs">
-				<span
-					class={cn(
-						'size-1.5 rounded-full',
-						session.phase === 'error'
-							? 'bg-destructive'
-							: session.phase === 'idle'
-								? 'bg-muted-foreground'
-								: 'bg-brand'
-					)}
-				></span>
-				{phaseLabels[session.phase]}
-			</span>
-
-			{#if session.phase === 'speaking'}
-				<Button variant="outline" size="sm" class="gap-1.5" onclick={() => session.stopSpeaking()}>
-					<CircleStop class="size-3.5" />
-					Stop
-				</Button>
-			{/if}
-		</div>
-	</header>
-
-	<div class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 overflow-hidden px-6 py-6">
-		<div class="flex justify-center" use:fadeIn={{ scale: 0.96, duration: 0.6 }}>
-			<Face expression={faceExpression} speaking={session.phase === 'speaking'} class="h-40 w-72" />
-		</div>
-
+		<!-- Transcript Scroll Area -->
 		<div
 			bind:this={transcriptEl}
-			class="border-border bg-card/30 flex-1 space-y-4 overflow-y-auto rounded-xl border p-5"
+			class="border-border bg-card/30 flex-1 space-y-3.5 overflow-y-auto rounded-xl border p-5"
 		>
 			{#if session.messages.length === 0}
-				<p class="text-muted-foreground text-sm">Say hello or type a question below to begin.</p>
+				<p class="text-muted-foreground text-sm text-center py-8 font-mono">
+					Say hello or select a quick question below to begin.
+				</p>
 			{/if}
 
 			{#each session.messages as message (message.id)}
@@ -112,9 +124,9 @@
 				>
 					<div
 						class={cn(
-							'max-w-[80%] rounded-lg px-4 py-2.5 text-sm leading-relaxed',
+							'max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed',
 							message.role === 'user'
-								? 'bg-secondary text-secondary-foreground'
+								? 'bg-secondary text-secondary-foreground font-medium'
 								: 'bg-muted/60 text-foreground'
 						)}
 					>
@@ -125,15 +137,16 @@
 		</div>
 
 		{#if session.error}
-			<p class="text-destructive text-xs">{session.error}</p>
+			<p class="text-destructive text-xs font-mono">{session.error}</p>
 		{/if}
 
-		<div class="space-y-3">
+		<!-- Input & Quick Prompts Toolbar -->
+		<footer class="space-y-3 shrink-0">
 			<div class="flex flex-wrap gap-2">
 				{#each cannedQuestions as question (question)}
 					<button
 						type="button"
-						class="border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 rounded-full border px-3 py-1 text-xs transition-colors"
+						class="border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-card/40 rounded-lg border px-3 py-1.5 text-xs transition-colors"
 						onclick={() => ask(question)}
 					>
 						{question}
@@ -142,7 +155,7 @@
 			</div>
 
 			<form class="flex items-center gap-2" onsubmit={submit}>
-				<Input bind:value={draft} placeholder="Type a message" class="h-11 flex-1" />
+				<Input bind:value={draft} placeholder="Type a message or speak..." class="h-12 flex-1" />
 				<Button
 					type="button"
 					variant="outline"
@@ -150,7 +163,7 @@
 					disabled={!session.micAvailable}
 					aria-pressed={session.listening}
 					aria-label="Use microphone"
-					class={session.listening ? 'border-brand text-brand' : ''}
+					class={session.listening ? 'border-brand text-brand ring-2 ring-brand/30' : ''}
 					onclick={() => session.toggleListening()}
 				>
 					<Mic class="size-4" />
@@ -159,12 +172,6 @@
 					<Send class="size-4" />
 				</Button>
 			</form>
-
-			{#if !session.micAvailable}
-				<p class="text-muted-foreground text-xs">
-					Microphone needs a secure context (https or localhost). Typing works everywhere.
-				</p>
-			{/if}
-		</div>
-	</div>
+		</footer>
+	</main>
 </div>

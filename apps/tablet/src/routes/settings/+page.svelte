@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { ArrowLeft, RefreshCw, RotateCcw, Volume2 } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
+	import { ArrowLeft, RefreshCw, RotateCcw, Volume2 } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
+	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { staggerIn } from '$lib/motion';
@@ -60,19 +61,23 @@
 	}
 </script>
 
-<div class="flex min-h-dvh flex-col">
-	<header class="border-border/70 flex items-center gap-3 border-b px-6 py-3">
-		<Button href={resolve('/')} variant="ghost" size="icon-sm" aria-label="Back to home">
-			<ArrowLeft class="size-4" />
-		</Button>
-		<span class="text-sm font-medium">Settings</span>
-	</header>
+<svelte:head>
+	<title>AT Bots — Settings</title>
+</svelte:head>
 
-	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8" use:staggerIn>
+<div class="flex h-full flex-col">
+	<PageHeader
+		title="Settings"
+		subtitle="Robot link & kiosk configuration"
+		backHref={resolve('/')}
+	/>
+
+	<!-- Portrait Scrollable Settings Container -->
+	<main class="mx-auto w-full max-w-2xl flex-1 space-y-6 overflow-y-auto px-6 py-6" use:staggerIn>
 		<section class="border-border bg-card/40 rounded-xl border p-6">
 			<div class="flex items-baseline justify-between">
-				<h2 class="text-sm font-medium">Robot link</h2>
-				<span class="text-muted-foreground text-xs">{statusLabel}</span>
+				<h2 class="text-sm font-semibold tracking-tight text-foreground">Robot Link</h2>
+				<span class="text-muted-foreground text-xs font-mono">{statusLabel}</span>
 			</div>
 
 			<div class="mt-4 space-y-4">
@@ -103,24 +108,26 @@
 				</div>
 
 				{#if telemetry}
-					<dl class="border-border/70 grid grid-cols-2 gap-x-6 gap-y-2 border-t pt-4 text-sm">
+					<dl
+						class="border-border/70 grid grid-cols-2 gap-x-6 gap-y-2 border-t pt-4 text-xs font-mono"
+					>
 						<dt class="text-muted-foreground">Drive</dt>
-						<dd class="text-right font-mono">{telemetry.drive}</dd>
+						<dd class="text-right">{telemetry.drive}</dd>
 						<dt class="text-muted-foreground">Expression</dt>
-						<dd class="text-right font-mono">{telemetry.expression}</dd>
+						<dd class="text-right">{telemetry.expression}</dd>
 						<dt class="text-muted-foreground">Free memory</dt>
-						<dd class="text-right font-mono">{telemetry.free} B</dd>
+						<dd class="text-right">{telemetry.free} B</dd>
 						<dt class="text-muted-foreground">Uptime</dt>
-						<dd class="text-right font-mono">{Math.round(telemetry.uptime_ms / 1000)} s</dd>
+						<dd class="text-right">{Math.round(telemetry.uptime_ms / 1000)} s</dd>
 					</dl>
 				{/if}
 			</div>
 		</section>
 
 		<section class="border-border bg-card/40 rounded-xl border p-6">
-			<h2 class="text-sm font-medium">AI relay</h2>
-			<p class="text-muted-foreground mt-1 text-xs">
-				Used by the conversation screen. Defaults to the local mock cloud.
+			<h2 class="text-sm font-semibold tracking-tight text-foreground">AI Relay</h2>
+			<p class="text-muted-foreground mt-1 text-xs leading-relaxed">
+				WebSocket streaming relay for conversational AI sessions.
 			</p>
 			<div class="mt-4 space-y-4">
 				<label class="block">
@@ -132,10 +139,10 @@
 		</section>
 
 		<section class="border-border bg-card/40 rounded-xl border p-6">
-			<h2 class="text-sm font-medium">Voice</h2>
+			<h2 class="text-sm font-semibold tracking-tight text-foreground">Voice Synthesis</h2>
 			<div class="mt-4 space-y-4">
 				<label class="block">
-					<span class="text-muted-foreground mb-1.5 block text-xs">System voice</span>
+					<span class="text-muted-foreground mb-1.5 block text-xs">System Voice</span>
 					<select
 						value={selectedVoice}
 						onchange={selectVoice}
@@ -147,16 +154,17 @@
 						{/each}
 					</select>
 				</label>
-				<Button variant="outline" onclick={() => session.testVoice()}>
+				<Button variant="outline" class="gap-1.5" onclick={() => session.testVoice()}>
 					<Volume2 class="size-4" />
-					Test voice
+					Test Voice
 				</Button>
 			</div>
 		</section>
+
 		<section class="border-border bg-card/40 rounded-xl border p-6">
-			<h2 class="text-sm font-medium">Commissioning & Provisioning</h2>
-			<p class="text-muted-foreground mt-1 text-xs">
-				Reset onboarding status to re-run the initial setup wizard.
+			<h2 class="text-sm font-semibold tracking-tight text-foreground">Commissioning</h2>
+			<p class="text-muted-foreground mt-1 text-xs leading-relaxed">
+				Reset onboarding status to re-run the initial commissioning wizard.
 			</p>
 			<div class="mt-4 flex items-center justify-between">
 				<div class="text-xs text-muted-foreground font-mono">
@@ -170,9 +178,9 @@
 					onclick={() => onboarding.reset()}
 				>
 					<RotateCcw class="size-3.5" />
-					Re-run Onboarding
+					Re-run Wizard
 				</Button>
 			</div>
 		</section>
-	</div>
+	</main>
 </div>

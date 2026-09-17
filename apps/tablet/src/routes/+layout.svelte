@@ -21,7 +21,12 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-{@render children()}
+<!-- Global Portrait Frame: 100dvh Container with Fixed Max Width & Centered Alignment -->
+<div
+	class="flex h-dvh w-screen flex-col overflow-hidden bg-background text-foreground antialiased selection:bg-brand/30"
+>
+	{@render children()}
+</div>
 
 <!-- Global Floating Bottom-Left Keyboard Dock (Numeric & Alphanumeric) -->
 <KeyboardDock />
