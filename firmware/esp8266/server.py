@@ -168,7 +168,9 @@ def main():
 
             try:
                 data = sock.recv(256)
-            except OSError:
+            except OSError as e:
+                if e.args[0] in (11, 115):  # EAGAIN (11), EWOULDBLOCK (11)
+                    continue
                 data = b""
             if not data:
                 drop(client)
@@ -200,7 +202,7 @@ def main():
                 if parsed is None:
                     break
                 opcode, payload, consumed = parsed
-                del client["buf"][:consumed]
+                client["buf"] = client["buf"][consumed:]
 
                 if opcode == ws.OP_CLOSE:
                     drop(client)
