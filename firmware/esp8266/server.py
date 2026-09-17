@@ -284,7 +284,7 @@ def main():
                     )
                     continue
 
-                if msg.get("topic") == "sys/hb":
+                if msg.get("topic") in ("sys/hb", "cmd/drive"):
                     last_hb = now
 
                 reply, announce = handle_command(msg)

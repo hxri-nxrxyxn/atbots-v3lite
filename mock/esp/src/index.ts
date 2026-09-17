@@ -79,14 +79,16 @@ function handleCommand(ws: WebSocket, message: ClientMessage): void {
 
 	switch (message.topic) {
 		case 'sys/hb':
-			lastHb = Date.now();
-			reply(ws, {
-				topic: 'res/hb_ack',
-				payload: { seq: message.payload.seq },
-				id
-			});
-			return;
 		case 'cmd/drive':
+			lastHb = Date.now();
+			if (message.topic === 'sys/hb') {
+				reply(ws, {
+					topic: 'res/hb_ack',
+					payload: { seq: message.payload.seq },
+					id
+				});
+				return;
+			}
 			state.drive = message.payload.dir;
 			state.speed = message.payload.speed;
 			reply(ws, {
