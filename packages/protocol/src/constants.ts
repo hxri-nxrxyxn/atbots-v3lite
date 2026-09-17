@@ -7,9 +7,6 @@ export const DEADMAN_MS = 500;
 /** ESP telemetry push interval. */
 export const TELEMETRY_MS = 1000;
 
-export const WS_PATH = '/ws';
-export const DEFAULT_HTTP_PORT = 80;
-
 /** Default local ports for the Node simulators. */
 export const MOCK_ESP_PORT = 8765;
 export const MOCK_CLOUD_PORT = 8787;
@@ -29,13 +26,4 @@ export const EXPRESSIONS = [
 	'listening',
 	'speaking',
 	'love'
-] as const;
-
-export const SYSTEM_STATES = [
-	'booting',
-	'no_network',
-	'low_battery',
-	'charging',
-	'estop',
-	'error'
 ] as const;

@@ -83,7 +83,7 @@ docs/                          design doc, protocol.md, runbook.md
 - JSON over WebSocket. The ESP is the local hub: both apps connect to it.
 - Script Mode routes operator → ESP → tablet; the tablet speaks.
 - Heartbeat 5 Hz (200 ms); deadman 500 ms → stop.
-- Never duplicate message strings outside `packages/protocol`.
+- Never duplicate message strier duplicate message strings outside `packages/protocol`.
 
 ## AI and voice
 
