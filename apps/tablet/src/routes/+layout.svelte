@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import favicon from '$lib/assets/favicon.svg';
+	import NumericKeypadDock from '$lib/components/NumericKeypadDock.svelte';
 	import { onboarding } from '$lib/state/onboarding.svelte';
 	import { onMount, type Snippet } from 'svelte';
 	import '../app.css';
@@ -10,7 +11,6 @@
 	let { children }: { children: Snippet } = $props();
 
 	onMount(() => {
-		// If one-time commissioning hasn't been completed and user is not on /onboarding, redirect
 		if (!onboarding.completed && !page.url.pathname.startsWith('/onboarding')) {
 			void goto(resolve('/onboarding'));
 		}
@@ -22,3 +22,6 @@
 </svelte:head>
 
 {@render children()}
+
+<!-- Global Floating Bottom-Left Numeric Keypad -->
+<NumericKeypadDock />

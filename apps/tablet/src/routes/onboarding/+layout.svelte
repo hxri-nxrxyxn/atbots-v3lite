@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { Bot, ShieldCheck } from '@lucide/svelte';
+	import NumericKeypadDock from '$lib/components/NumericKeypadDock.svelte';
 
 	let { children }: { children: Snippet } = $props();
 </script>
@@ -38,3 +39,6 @@
 		Target Commissioning Time: &lt; 5 Minutes · Fail-Open Architecture
 	</footer>
 </div>
+
+<!-- Global Bottom-Left Floating Keypad Dock for Onboarding -->
+<NumericKeypadDock />
