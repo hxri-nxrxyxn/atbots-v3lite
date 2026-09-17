@@ -1,7 +1,4 @@
-"""Bench HTTP + WebSocket server for the ESP8266 prototype.
-
-Standardized Topic & Payload WebSocket protocol with correlated Request-Response IDs.
-"""
+"""Bench HTTP + WebSocket server for the ESP8266 prototype with hardware telemetry."""
 
 import gc
 import json
@@ -17,7 +14,22 @@ DEADMAN_MS = 500
 TELEMETRY_MS = 1000
 MAX_BUFFER = 1024
 
-STATE = {"drive": "stop", "speed": 0, "expression": "neutral", "speaking": False}
+STATE = {
+    "drive": "stop",
+    "speed": 0,
+    "expression": "neutral",
+    "speaking": False,
+    "estop": False,
+    "charger": False,
+    "tactile": False,
+    "servos": [
+        {"id": 1, "name": "sh_l", "deg": 0, "c": 38, "v": 11.8},
+        {"id": 2, "name": "sh_r", "deg": 0, "c": 39, "v": 11.8},
+        {"id": 3, "name": "el_l", "deg": 0, "c": 34, "v": 11.9},
+        {"id": 4, "name": "el_r", "deg": 0, "c": 35, "v": 11.9},
+        {"id": 5, "name": "neck", "deg": 0, "c": 32, "v": 11.9}
+    ]
+}
 
 
 def now_ms():
@@ -39,6 +51,7 @@ def status(wlan):
 
 
 def telemetry():
+    pwm = 0 if STATE["drive"] == "stop" else int((STATE["speed"] / 10) * 255)
     return {
         "topic": "telemetry",
         "payload": {
@@ -48,12 +61,36 @@ def telemetry():
             "speaking": STATE["speaking"],
             "free": gc.mem_free(),
             "uptime_ms": now_ms(),
+            "motors": {
+                "state": STATE["drive"],
+                "speed": STATE["speed"],
+                "pwmLeft": pwm,
+                "pwmRight": pwm,
+                "estopActive": STATE["estop"],
+                "deadmanActive": False
+            },
+            "power": {
+                "packVoltage": 13.1,
+                "currentAmps": 1.4,
+                "socPercent": 86,
+                "chargerPresent": STATE["charger"]
+            },
+            "servos": STATE["servos"],
+            "display": {
+                "link": "UART1",
+                "fps": 60,
+                "currentExpression": STATE["expression"]
+            },
+            "io": {
+                "gpio10ChargerSense": STATE["charger"],
+                "gpio11EstopSense": STATE["estop"],
+                "gpio15TactileSensor": STATE["tactile"]
+            }
         },
     }
 
 
 def handle_command(msg):
-    """Return (reply_or_None, broadcast_or_None) for an incoming topic envelope."""
     topic = msg.get("topic")
     payload = msg.get("payload", {})
     req_id = msg.get("id")
@@ -66,6 +103,12 @@ def handle_command(msg):
         }, None
 
     if topic == "cmd/drive":
+        if STATE["estop"]:
+            return {
+                "topic": "res/nack",
+                "payload": {"status": "error", "reason": "estop_active"},
+                "id": req_id
+            }, None
         STATE["drive"] = payload.get("dir", "stop")
         STATE["speed"] = payload.get("speed", 0)
         return {
@@ -108,6 +151,8 @@ def handle_command(msg):
 
     if topic == "cmd/home":
         STATE["expression"] = "neutral"
+        for s in STATE["servos"]:
+            s["deg"] = 0
         return {
             "topic": "res/ack",
             "payload": {"status": "ok", "cmd": "cmd/home"},
@@ -127,6 +172,32 @@ def handle_command(msg):
                 "payload": {"text": text},
             },
         )
+
+    if topic == "cmd/debug/servo":
+        s_id = payload.get("id")
+        target_angle = payload.get("targetAngle", 0)
+        for s in STATE["servos"]:
+            if s["id"] == s_id:
+                s["deg"] = target_angle
+        return {
+            "topic": "res/ack",
+            "payload": {"status": "ok", "cmd": "cmd/debug/servo"},
+            "id": req_id
+        }, None
+
+    if topic == "cmd/debug/estop":
+        STATE["estop"] = payload.get("active", False)
+        if STATE["estop"]:
+            STATE["drive"] = "stop"
+            STATE["speed"] = 0
+        return {
+            "topic": "res/ack",
+            "payload": {"status": "ok", "cmd": "cmd/debug/estop"},
+            "id": req_id
+        }, {
+            "topic": "event/estop",
+            "payload": {"state": "active" if STATE["estop"] else "cleared"}
+        }
 
     return {
         "topic": "res/nack",
@@ -183,7 +254,13 @@ def main():
 
     def send_raw(client, data):
         try:
-            client["sock"].send(data)
+            total_sent = 0
+            while total_sent < len(data):
+                sent = client["sock"].send(data[total_sent:])
+                if sent == 0:
+                    drop(client)
+                    return
+                total_sent += sent
         except OSError:
             drop(client)
 
@@ -247,7 +324,7 @@ def main():
                             "payload": {
                                 "proto": PROTOCOL_VERSION,
                                 "ip": ip,
-                                "robot_id": "bot-001",
+                                "robot_id": "bot-001"
                             },
                         },
                     )

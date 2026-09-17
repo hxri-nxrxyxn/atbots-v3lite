@@ -8,7 +8,11 @@ const CLIENT_TOPICS = new Set([
 	'cmd/speaking',
 	'cmd/say',
 	'cmd/sequence',
-	'cmd/home'
+	'cmd/home',
+	'cmd/debug/motor',
+	'cmd/debug/servo',
+	'cmd/debug/estop',
+	'cmd/debug/fault'
 ]);
 
 const ESP_TOPICS = new Set([

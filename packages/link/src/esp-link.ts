@@ -18,6 +18,16 @@ export type ExtractClientPayload<TTopic extends ClientTopic> = Extract<
 	{ topic: TTopic }
 >['payload'];
 
+export interface PacketTrace {
+	id: string;
+	direction: 'tx' | 'rx';
+	topic: string;
+	payload: unknown;
+	msgId?: string;
+	ts: number;
+	changed?: boolean;
+}
+
 /** Transport-agnostic link to the robot's ESP with Topic & Payload and Correlated Requests. */
 export interface EspLink {
 	readonly status: LinkStatus;
@@ -45,4 +55,7 @@ export interface EspLink {
 
 	/** Subscribe to link connection status changes. */
 	onStatus(handler: (status: LinkStatus) => void): () => void;
+
+	/** Packet inspector callback for real-time signal monitoring. */
+	onTrace?(handler: (trace: PacketTrace) => void): () => void;
 }

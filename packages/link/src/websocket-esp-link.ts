@@ -8,7 +8,13 @@ import {
 	type ResAckMessage
 } from '@atbots/protocol';
 
-import type { EspLink, ExtractClientPayload, ExtractPayload, LinkStatus } from './esp-link';
+import type {
+	EspLink,
+	ExtractClientPayload,
+	ExtractPayload,
+	LinkStatus,
+	PacketTrace
+} from './esp-link';
 
 export interface WebSocketEspLinkOptions {
 	url: string;
@@ -33,11 +39,13 @@ export class WebSocketEspLink implements EspLink {
 	#manualClose = false;
 	#seq = 0;
 	#reqId = 0;
+	#traceId = 0;
 	#queue: ClientMessage[] = [];
 
 	#pendingRequests = new Map<string, PendingRequest>();
 	#messageHandlers = new Set<(message: EspMessage) => void>();
 	#statusHandlers = new Set<(status: LinkStatus) => void>();
+	#traceHandlers = new Set<(trace: PacketTrace) => void>();
 	#topicHandlers = new Map<string, Set<(payload: unknown, message: EspMessage) => void>>();
 
 	readonly #url: string;
@@ -70,13 +78,15 @@ export class WebSocketEspLink implements EspLink {
 			this.#setStatus('open');
 			this.#startHeartbeat();
 			for (const message of this.#queue.splice(0)) {
-				ws.send(JSON.stringify(message));
+				this.#sendRaw(message);
 			}
 		};
 
 		ws.onmessage = (event: MessageEvent) => {
 			const message = parseEspMessage(event.data);
 			if (!message) return;
+
+			this.#emitTrace('rx', message.topic, message.payload, message.id);
 
 			// Resolve correlated request if message contains an ID
 			if (message.id && (message.topic === 'res/ack' || message.topic === 'res/nack')) {
@@ -142,13 +152,18 @@ export class WebSocketEspLink implements EspLink {
 
 	send(message: ClientMessage): void {
 		if (this.#ws && this.#status === 'open') {
-			this.#ws.send(JSON.stringify(message));
+			this.#sendRaw(message);
 			return;
 		}
 		// Heartbeats are only meaningful while connected; queue the rest.
 		if (message.topic !== 'sys/hb') {
 			this.#queue.push(message);
 		}
+	}
+
+	#sendRaw(message: ClientMessage): void {
+		this.#emitTrace('tx', message.topic, message.payload, message.id);
+		this.#ws?.send(JSON.stringify(message));
 	}
 
 	request<TTopic extends ClientTopic>(
@@ -198,6 +213,23 @@ export class WebSocketEspLink implements EspLink {
 	onStatus(handler: (status: LinkStatus) => void): () => void {
 		this.#statusHandlers.add(handler);
 		return () => this.#statusHandlers.delete(handler);
+	}
+
+	onTrace(handler: (trace: PacketTrace) => void): () => void {
+		this.#traceHandlers.add(handler);
+		return () => this.#traceHandlers.delete(handler);
+	}
+
+	#emitTrace(direction: 'tx' | 'rx', topic: string, payload: unknown, msgId?: string): void {
+		const trace: PacketTrace = {
+			id: `tr_${++this.#traceId}`,
+			direction,
+			topic,
+			payload,
+			msgId,
+			ts: Date.now()
+		};
+		for (const handler of this.#traceHandlers) handler(trace);
 	}
 
 	#dispatchTopic(topic: string, payload: unknown, message: EspMessage): void {

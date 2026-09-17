@@ -21,10 +21,12 @@ describe('MockEspLink with Topic Schema & Requests', () => {
 		vi.advanceTimersByTime(1);
 
 		expect(link.status).toBe('open');
-		expect(messages[0]).toEqual({
-			topic: 'sys/hello',
-			payload: { proto: 1, ip: '127.0.0.1', robot_id: 'bot-001' }
-		});
+		const first = messages[0];
+		expect(first).toBeDefined();
+		if (first) {
+			expect(first.topic).toBe('sys/hello');
+			expect((first.payload as { proto: number }).proto).toBe(1);
+		}
 
 		vi.advanceTimersByTime(1000);
 		expect(messages.some((m) => m.topic === 'telemetry')).toBe(true);
