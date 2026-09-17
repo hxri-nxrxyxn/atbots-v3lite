@@ -59,6 +59,11 @@
   `src/app.css`). Add components with `npx shadcn-svelte@latest add <name> -y --no-deps-install`
   then `npm install`. Do **not** re-run `shadcn-svelte init` — it demands an interactive
   preset and overwrites `src/app.css`.
+- **UI Design Principles (Zero AI Slop)**:
+  - Strict typography and clean editorial document hierarchy (`font-semibold tracking-tight`, `text-sm text-muted-foreground`).
+  - **NO decorative pill tags, colored badge chips, or uppercase letter-spaced micro-tags everywhere** (these scream "AI template").
+  - Use the established monochrome/amber brand palette (`--brand`, `--background`, `--card`, `--border`). Avoid random colored accents like neon greens/blues.
+  - Keep interactive elements tactile, restrained, and intentional for physical kiosk touchscreens.
 - TypeScript everywhere. npm workspaces (`npm -w <pkg> run <script>`), not
   pnpm/yarn.
 - Capacitor is the intended wrapper but is not built yet. Do not attempt Android

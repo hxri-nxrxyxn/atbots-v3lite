@@ -170,18 +170,14 @@
 						class="border-border bg-card/40 hover:border-foreground/30 hover:bg-card flex flex-col justify-between rounded-xl border p-6 text-left transition-all group"
 						onclick={() => startQuiz(quiz)}
 					>
-						<div class="space-y-3">
-							<div class="flex items-center justify-between">
-								<span
-									class="bg-muted text-foreground/80 rounded-md px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider font-mono"
-								>
-									{quiz.category}
-								</span>
-								<span class="text-muted-foreground text-xs font-mono">
-									{quiz.questions.length} questions
-								</span>
+						<div class="space-y-2">
+							<div
+								class="flex items-center justify-between text-xs text-muted-foreground font-mono"
+							>
+								<span>{quiz.category}</span>
+								<span>{quiz.questions.length} questions</span>
 							</div>
-							<h2 class="text-lg font-semibold tracking-tight group-hover:text-foreground">
+							<h2 class="text-base font-semibold tracking-tight group-hover:text-foreground">
 								{quiz.title}
 							</h2>
 							<p class="text-muted-foreground text-sm leading-normal">
@@ -314,12 +310,10 @@
 				<!-- Explanation Box (revealed on submit) -->
 				{#if isAnswerSubmitted}
 					<div
-						class={cn('rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed')}
+						class="rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed"
 						use:fadeIn
 					>
-						<span
-							class="font-semibold text-xs font-mono uppercase tracking-wider block mb-1 text-foreground"
-						>
+						<span class="font-medium text-xs text-foreground block mb-1">
 							{isCorrect ? 'Correct' : 'Explanation'}
 						</span>
 						<p class="text-muted-foreground text-sm">{currentQuestion.explanation}</p>

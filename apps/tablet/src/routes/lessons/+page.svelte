@@ -123,20 +123,15 @@
 						class="border-border bg-card/40 hover:border-foreground/30 hover:bg-card flex flex-col justify-between rounded-xl border p-6 text-left transition-all group"
 						onclick={() => openLesson(lesson)}
 					>
-						<div class="space-y-3">
-							<div class="flex items-center justify-between">
-								<span
-									class="bg-muted text-foreground/80 rounded-md px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider font-mono"
-								>
-									{lesson.category}
-								</span>
-								<span class="text-muted-foreground flex items-center gap-1.5 text-xs font-mono">
-									<Clock class="size-3" />
-									{lesson.readingTimeMinutes} min
-								</span>
+						<div class="space-y-2">
+							<div
+								class="flex items-center justify-between text-xs text-muted-foreground font-mono"
+							>
+								<span>{lesson.category}</span>
+								<span>{lesson.readingTimeMinutes} min</span>
 							</div>
 
-							<h2 class="text-lg font-semibold tracking-tight group-hover:text-foreground">
+							<h2 class="text-base font-semibold tracking-tight group-hover:text-foreground">
 								{lesson.title}
 							</h2>
 							<p class="text-muted-foreground text-sm leading-normal">
@@ -191,7 +186,7 @@
 							class="h-12 w-20 shrink-0"
 						/>
 						<div>
-							<span class="text-muted-foreground font-mono text-xs uppercase tracking-wider block">
+							<span class="text-muted-foreground text-xs font-mono block">
 								Section {activeSectionIndex + 1} of {selectedLesson.sections.length}
 							</span>
 							<h2 class="scroll-m-20 text-xl font-bold tracking-tight mt-0.5">
@@ -222,13 +217,8 @@
 
 						{#if activeSection.speechScript}
 							<blockquote
-								class="border-l-2 border-border pl-4 text-sm text-muted-foreground leading-relaxed"
+								class="border-l-2 border-border pl-4 text-sm text-muted-foreground leading-relaxed italic"
 							>
-								<span
-									class="font-mono text-[10px] uppercase tracking-wider font-semibold text-foreground/80 block mb-1"
-								>
-									Robot Narration
-								</span>
 								"{activeSection.speechScript}"
 							</blockquote>
 						{/if}

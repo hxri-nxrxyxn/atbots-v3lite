@@ -22,9 +22,7 @@
 
 <header class="border-border/70 flex items-center justify-between border-b px-8 py-4">
 	<div class="flex items-center gap-2">
-		<span class="text-muted-foreground text-xs font-medium tracking-[0.2em] uppercase">
-			AT Bots
-		</span>
+		<span class="text-muted-foreground text-xs font-semibold"> AT Bots </span>
 	</div>
 
 	<div class="flex items-center gap-4">

@@ -81,11 +81,9 @@
 
 	<div class="mx-auto w-full max-w-5xl flex-1 space-y-10 px-6 py-8">
 		<section>
-			<h2 class="text-muted-foreground text-xs font-medium tracking-[0.15em] uppercase">
-				Local control
-			</h2>
-			<p class="text-muted-foreground mt-1 text-sm">
-				Works on the robot's network, with no internet.
+			<h2 class="text-sm font-semibold tracking-tight text-foreground">Local Control</h2>
+			<p class="text-muted-foreground text-xs mt-0.5">
+				Direct WebSocket control plane with zero internet dependency.
 			</p>
 			<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" use:staggerIn>
 				{#each local as mode (mode.href)}
@@ -101,11 +99,9 @@
 		</section>
 
 		<section>
-			<h2 class="text-muted-foreground text-xs font-medium tracking-[0.15em] uppercase">
-				Cloud admin
-			</h2>
-			<p class="text-muted-foreground mt-1 text-sm">
-				Fleet, content, credits and sessions from the backend.
+			<h2 class="text-sm font-semibold tracking-tight text-foreground">Cloud Management</h2>
+			<p class="text-muted-foreground text-xs mt-0.5">
+				Fleet telemetry, knowledge bases, credits, and session history.
 			</p>
 			<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" use:staggerIn>
 				{#each cloud as mode (mode.href)}

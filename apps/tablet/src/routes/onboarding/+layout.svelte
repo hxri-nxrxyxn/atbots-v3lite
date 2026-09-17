@@ -14,9 +14,7 @@
 				<Bot class="size-4" />
 			</div>
 			<div>
-				<span class="text-xs font-semibold tracking-[0.2em] uppercase font-mono block">
-					AT BOTS V3 LITE
-				</span>
+				<span class="text-xs font-semibold font-mono block"> AT Bots V3 Lite </span>
 				<span class="text-muted-foreground text-xs">Commissioning & Provisioning</span>
 			</div>
 		</div>
