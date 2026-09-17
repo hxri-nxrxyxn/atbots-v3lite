@@ -1,15 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { Lesson, LessonSection } from '@atbots/protocol';
-	import {
-		ArrowLeft,
-		BookOpen,
-		ChevronRight,
-		CircleStop,
-		Clock,
-		Sparkles,
-		Volume2
-	} from '@lucide/svelte';
+	import { ArrowLeft, BookOpen, ChevronRight, CircleStop, Clock, Volume2 } from '@lucide/svelte';
 
 	import { Button } from '$lib/components/ui/button';
 	import { SAMPLE_LESSONS } from '$lib/data/education';
@@ -68,7 +60,7 @@
 </script>
 
 <svelte:head>
-	<title>AT Bots — Interactive Lessons</title>
+	<title>AT Bots — Lessons</title>
 </svelte:head>
 
 <div class="flex min-h-dvh flex-col">
@@ -84,14 +76,14 @@
 				<ArrowLeft class="size-4" />
 			</Button>
 			<div>
-				<div class="text-sm font-medium">
-					{selectedLesson ? selectedLesson.title : 'Guided Lessons'}
+				<div class="text-sm font-semibold tracking-tight">
+					{selectedLesson ? selectedLesson.title : 'Lessons'}
 				</div>
-				<div class="text-muted-foreground text-xs">
+				<p class="text-muted-foreground text-xs">
 					{selectedLesson
 						? `Category: ${selectedLesson.category}`
-						: 'Interactive STEM and robotics reading'}
-				</div>
+						: 'Interactive reading & robot narration'}
+				</p>
 			</div>
 		</div>
 
@@ -105,45 +97,49 @@
 
 	{#if !selectedLesson}
 		<!-- Lesson Catalog -->
-		<div class="mx-auto w-full max-w-4xl flex-1 space-y-8 px-6 py-8" use:staggerIn>
-			<div class="flex items-center gap-5">
+		<div class="mx-auto w-full max-w-4xl flex-1 space-y-10 px-6 py-10" use:staggerIn>
+			<div class="flex items-center gap-6">
 				<Face expression="curious" class="h-14 w-24 shrink-0" />
 				<div>
-					<h1 class="text-xl font-semibold">Guided Lesson Library</h1>
-					<p class="text-muted-foreground mt-1 text-sm">
-						Read along with the robot, or listen as each section is explained aloud.
+					<h1 class="scroll-m-20 text-2xl font-bold tracking-tight">Lesson Library</h1>
+					<p class="text-muted-foreground text-sm leading-relaxed mt-1">
+						Structured technical reading modules with synchronized voice narration.
 					</p>
 				</div>
 			</div>
 
-			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			<div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
 				{#each SAMPLE_LESSONS as lesson (lesson.id)}
 					<button
 						type="button"
-						class="border-border bg-card/40 hover:border-brand/50 hover:bg-card flex flex-col justify-between rounded-xl border p-6 text-left transition-all"
+						class="border-border bg-card/40 hover:border-foreground/30 hover:bg-card flex flex-col justify-between rounded-xl border p-6 text-left transition-all group"
 						onclick={() => openLesson(lesson)}
 					>
-						<div>
+						<div class="space-y-3">
 							<div class="flex items-center justify-between">
 								<span
-									class="bg-brand/15 text-brand rounded-md px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider"
+									class="bg-muted text-foreground/80 rounded-md px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider font-mono"
 								>
 									{lesson.category}
 								</span>
-								<span class="text-muted-foreground flex items-center gap-1 text-xs font-mono">
+								<span class="text-muted-foreground flex items-center gap-1.5 text-xs font-mono">
 									<Clock class="size-3" />
-									{lesson.readingTimeMinutes} min read
+									{lesson.readingTimeMinutes} min
 								</span>
 							</div>
 
-							<h2 class="mt-4 text-base font-semibold">{lesson.title}</h2>
-							<p class="text-muted-foreground mt-2 text-sm leading-relaxed">
+							<h2 class="text-lg font-semibold tracking-tight group-hover:text-foreground">
+								{lesson.title}
+							</h2>
+							<p class="text-muted-foreground text-sm leading-normal">
 								{lesson.summary}
 							</p>
 						</div>
 
-						<div class="text-brand mt-6 flex items-center gap-1.5 text-xs font-medium">
-							Open Lesson →
+						<div
+							class="text-foreground/80 font-mono mt-6 flex items-center gap-1.5 text-xs font-medium"
+						>
+							Open module <span class="transition-transform group-hover:translate-x-0.5">→</span>
 						</div>
 					</button>
 				{/each}
@@ -152,98 +148,109 @@
 	{:else}
 		<!-- Active Lesson Reader -->
 		<div
-			class="mx-auto grid w-full max-w-5xl flex-1 grid-cols-1 gap-8 px-6 py-8 md:grid-cols-3"
+			class="mx-auto grid w-full max-w-5xl flex-1 grid-cols-1 gap-8 px-6 py-8 md:grid-cols-12"
 			use:fadeIn
 		>
 			<!-- Section Navigation Sidebar -->
-			<div class="space-y-4 md:col-span-1">
+			<aside class="space-y-4 md:col-span-4">
 				<div class="border-border/70 flex items-center gap-3 border-b pb-4">
 					<Face
 						expression={speaking ? 'speaking' : 'listening'}
 						{speaking}
-						class="h-12 w-20 shrink-0"
+						class="h-10 w-16 shrink-0"
 					/>
-					<div class="text-xs text-muted-foreground">
-						<span class="font-medium text-foreground block">Lesson Reader</span>
-						{speaking ? 'Speaking section aloud...' : 'Select a section below'}
+					<div class="text-xs">
+						<span class="font-semibold tracking-tight text-foreground block">Contents</span>
+						<span class="text-muted-foreground font-mono">
+							{activeSectionIndex + 1} of {selectedLesson.sections.length} sections
+						</span>
 					</div>
 				</div>
 
-				<div class="space-y-1.5">
+				<nav class="space-y-1">
 					{#each selectedLesson.sections as section, idx (section.heading)}
 						{@const isActive = activeSectionIndex === idx}
 						<button
 							type="button"
 							onclick={() => selectSection(idx)}
 							class={cn(
-								'flex w-full items-center justify-between rounded-lg px-3.5 py-2.5 text-left text-xs transition-all',
+								'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors',
 								isActive
-									? 'bg-brand/15 border-brand/40 border font-medium text-brand'
-									: 'hover:bg-muted/40 text-muted-foreground hover:text-foreground'
+									? 'bg-secondary font-medium text-secondary-foreground border border-border/80'
+									: 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
 							)}
 						>
-							<span class="truncate">{section.heading}</span>
-							<ChevronRight class="size-3.5 opacity-60 shrink-0 ml-2" />
+							<span class="truncate font-medium">{section.heading}</span>
+							<ChevronRight class="size-3.5 opacity-50 shrink-0 ml-2" />
 						</button>
 					{/each}
-				</div>
-			</div>
+				</nav>
+			</aside>
 
-			<!-- Main Content View -->
-			<div class="space-y-6 md:col-span-2">
+			<!-- Main Article View -->
+			<main class="space-y-8 md:col-span-8">
 				{#if activeSection}
-					<article class="border-border bg-card/40 rounded-2xl border p-8 space-y-6">
-						<div class="flex items-center justify-between border-b border-border/70 pb-4">
-							<h2 class="text-lg font-semibold">{activeSection.heading}</h2>
+					<article class="space-y-6">
+						<div class="flex items-start justify-between gap-4 border-b border-border/70 pb-4">
+							<h2 class="scroll-m-20 text-xl font-semibold tracking-tight">
+								{activeSection.heading}
+							</h2>
 							<Button
-								variant="ghost"
+								variant="outline"
 								size="sm"
-								class="gap-1.5 text-xs text-muted-foreground"
+								class="gap-1.5 text-xs font-medium shrink-0"
 								onclick={() => readSection(activeSection)}
 							>
-								<Volume2 class="size-4" />
-								Listen Again
+								<Volume2 class="size-3.5" />
+								Listen
 							</Button>
 						</div>
 
-						<p class="text-foreground/90 text-sm leading-relaxed whitespace-pre-line">
-							{activeSection.content}
-						</p>
+						<div class="space-y-4 text-sm leading-7 text-foreground/90">
+							<p>
+								{activeSection.content}
+							</p>
+						</div>
 
 						{#if activeSection.speechScript}
-							<div
-								class="rounded-xl border border-brand/20 bg-brand/5 p-4 text-xs text-muted-foreground leading-normal flex items-start gap-3"
+							<blockquote
+								class="mt-6 border-l-2 border-border pl-4 italic text-sm text-muted-foreground"
 							>
-								<Sparkles class="size-4 text-brand shrink-0 mt-0.5" />
-								<div>
-									<span class="font-semibold text-brand block mb-0.5">Robot Voice Summary:</span>
-									"{activeSection.speechScript}"
-								</div>
-							</div>
+								<span
+									class="not-italic font-semibold text-foreground text-xs uppercase tracking-wider block mb-1 font-mono"
+								>
+									Key Takeaway
+								</span>
+								"{activeSection.speechScript}"
+							</blockquote>
 						{/if}
 					</article>
 
 					<!-- Bottom Navigation Between Sections -->
-					<div class="flex items-center justify-between pt-2">
+					<footer class="flex items-center justify-between border-t border-border/70 pt-6">
 						<Button
 							variant="outline"
 							size="sm"
 							disabled={activeSectionIndex === 0}
 							onclick={() => selectSection(activeSectionIndex - 1)}
 						>
-							← Previous Section
+							Previous
 						</Button>
+
+						<div class="text-xs text-muted-foreground font-mono">
+							{activeSectionIndex + 1} / {selectedLesson.sections.length}
+						</div>
 
 						{#if activeSectionIndex + 1 < selectedLesson.sections.length}
 							<Button size="sm" onclick={() => selectSection(activeSectionIndex + 1)}>
-								Next Section →
+								Next Section
 							</Button>
 						{:else}
-							<Button size="sm" variant="secondary" onclick={backToCatalog}>✔ Finish Lesson</Button>
+							<Button size="sm" variant="secondary" onclick={backToCatalog}>Complete Lesson</Button>
 						{/if}
-					</div>
+					</footer>
 				{/if}
-			</div>
+			</main>
 		</div>
 	{/if}
 </div>
