@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Expression } from '@atbots/protocol';
+	import { gsap } from 'gsap';
 
 	import { FACE_PARAMS } from './face-params';
 
@@ -13,8 +14,43 @@
 	let mouthAnim = $state(0);
 	let driftX = $state(0);
 	let driftY = $state(0);
+	let svgEl = $state<SVGSVGElement | undefined>(undefined);
 
-	const params = $derived(FACE_PARAMS[expression] ?? FACE_PARAMS.neutral);
+	// Expression parameters are tweened between targets so the face morphs
+	// rather than snapping. `proxy` is the GSAP target; `animated` drives the SVG.
+	const animated = $state({ ...FACE_PARAMS.neutral });
+	const proxy = { ...FACE_PARAMS.neutral };
+
+	const prefersReducedMotion =
+		typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	$effect(() => {
+		const target = FACE_PARAMS[expression] ?? FACE_PARAMS.neutral;
+		if (prefersReducedMotion) {
+			Object.assign(animated, target);
+			return;
+		}
+		Object.assign(proxy, $state.snapshot(animated));
+		gsap.to(proxy, {
+			...target,
+			duration: 0.4,
+			ease: 'power2.out',
+			overwrite: true,
+			onUpdate: () => Object.assign(animated, proxy)
+		});
+	});
+
+	$effect(() => {
+		if (!svgEl || prefersReducedMotion) return;
+		const tween = gsap.from(svgEl, {
+			autoAlpha: 0,
+			scale: 0.96,
+			duration: 0.6,
+			ease: 'power2.out',
+			clearProps: 'opacity,visibility,transform'
+		});
+		return () => tween.kill();
+	});
 
 	$effect(() => {
 		let frame = 0;
@@ -52,16 +88,17 @@
 		return () => cancelAnimationFrame(frame);
 	});
 
-	const eyeRy = $derived(30 * params.eyeOpen * blink);
-	const mouthOpen = $derived(Math.max(params.mouthOpen, speaking ? mouthAnim : 0));
+	const eyeRy = $derived(30 * animated.eyeOpen * blink);
+	const mouthOpen = $derived(Math.max(animated.mouthOpen, speaking ? mouthAnim : 0));
 	const mouthTop = $derived(-2 - mouthOpen * 16);
-	const mouthBottom = $derived(params.mouthCurve * 12 + mouthOpen * 18);
+	const mouthBottom = $derived(animated.mouthCurve * 12 + mouthOpen * 18);
 	const mouthPath = $derived(`M -30 0 Q 0 ${mouthTop} 30 0 Q 0 ${mouthBottom} -30 0 Z`);
 
-	const browY = $derived(28 + params.browY);
+	const browY = $derived(28 + animated.browY);
 </script>
 
 <svg
+	bind:this={svgEl}
 	viewBox="0 0 240 150"
 	class={className}
 	role="img"
@@ -78,13 +115,19 @@
 	</g>
 
 	<g class="stroke-foreground" fill="none" stroke-width="6" stroke-linecap="round">
-		<line x1="58" y1={browY} x2="98" y2={browY} transform="rotate({params.browTilt} 78 {browY})" />
+		<line
+			x1="58"
+			y1={browY}
+			x2="98"
+			y2={browY}
+			transform="rotate({animated.browTilt} 78 {browY})"
+		/>
 		<line
 			x1="142"
 			y1={browY}
 			x2="182"
 			y2={browY}
-			transform="rotate({-params.browTilt} 162 {browY})"
+			transform="rotate({-animated.browTilt} 162 {browY})"
 		/>
 	</g>
 

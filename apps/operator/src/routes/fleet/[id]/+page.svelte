@@ -5,6 +5,7 @@
 
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { fadeIn } from '$lib/motion';
 	import { cloud } from '$lib/state/cloud.svelte';
 
 	let robot = $state<RobotSummary | null>(null);
@@ -43,7 +44,7 @@
 		{/snippet}
 	</PageHeader>
 
-	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8">
+	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8" use:fadeIn>
 		{#if error}
 			<p class="text-destructive text-sm">{error}</p>
 		{:else if !robot}

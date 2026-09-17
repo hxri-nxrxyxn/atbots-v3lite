@@ -5,6 +5,7 @@
 	import UnlockGate from '$lib/components/UnlockGate.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { staggerIn } from '$lib/motion';
 	import { robot } from '$lib/state/robot.svelte';
 
 	const phrases = [
@@ -35,7 +36,7 @@
 	<PageHeader title="Script Mode" subtitle="The tablet speaks what you type" />
 
 	<UnlockGate title="Script Mode locked">
-		<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8">
+		<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8" use:staggerIn>
 			<section>
 				<h2 class="text-muted-foreground text-xs font-medium tracking-[0.15em] uppercase">
 					Phrase library

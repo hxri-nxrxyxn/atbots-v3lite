@@ -6,6 +6,7 @@
 
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { staggerIn } from '$lib/motion';
 	import { cloud } from '$lib/state/cloud.svelte';
 	import { cn } from '$lib/utils';
 
@@ -30,7 +31,7 @@
 		{/snippet}
 	</PageHeader>
 
-	<div class="mx-auto w-full max-w-3xl space-y-3 px-6 py-8">
+	<div class="mx-auto w-full max-w-3xl space-y-3 px-6 py-8" use:staggerIn>
 		{#if cloud.error}
 			<p class="text-destructive text-sm">{cloud.error}</p>
 		{/if}

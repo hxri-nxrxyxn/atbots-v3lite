@@ -5,6 +5,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import UnlockGate from '$lib/components/UnlockGate.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { fadeIn } from '$lib/motion';
 	import { robot } from '$lib/state/robot.svelte';
 	import { cn } from '$lib/utils';
 
@@ -45,7 +46,7 @@
 	</PageHeader>
 
 	<UnlockGate title="Drive controls locked">
-		<div class="mx-auto w-full max-w-md space-y-5 px-6 py-8">
+		<div class="mx-auto w-full max-w-md space-y-5 px-6 py-8" use:fadeIn>
 			{#if robot.estop}
 				<div
 					class="border-destructive/40 bg-destructive/10 text-destructive rounded-xl border p-4 text-sm"

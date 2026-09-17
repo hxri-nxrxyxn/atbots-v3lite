@@ -4,6 +4,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { staggerIn } from '$lib/motion';
 	import { auth } from '$lib/state/auth.svelte';
 	import { robot } from '$lib/state/robot.svelte';
 
@@ -41,7 +42,7 @@
 <div class="flex min-h-dvh flex-col">
 	<PageHeader title="Connect" subtitle="Robot link and operator access" />
 
-	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8">
+	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8" use:staggerIn>
 		<section class="border-border bg-card/40 rounded-xl border p-6">
 			<div class="flex items-baseline justify-between">
 				<h2 class="text-sm font-medium">Robot</h2>

@@ -5,6 +5,7 @@
 
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { staggerIn } from '$lib/motion';
 	import { robot } from '$lib/state/robot.svelte';
 	import { session } from '$lib/state/session.svelte';
 
@@ -66,7 +67,7 @@
 		<span class="text-sm font-medium">Settings</span>
 	</header>
 
-	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8">
+	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8" use:staggerIn>
 		<section class="border-border bg-card/40 rounded-xl border p-6">
 			<div class="flex items-baseline justify-between">
 				<h2 class="text-sm font-medium">Robot link</h2>

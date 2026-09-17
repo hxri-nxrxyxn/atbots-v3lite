@@ -7,6 +7,7 @@
 	import ModeTile from '$lib/components/ModeTile.svelte';
 	import StatusBar from '$lib/components/StatusBar.svelte';
 	import Face from '$lib/face/Face.svelte';
+	import { fadeIn, staggerIn } from '$lib/motion';
 	import { robot } from '$lib/state/robot.svelte';
 
 	interface Mode {
@@ -51,7 +52,7 @@
 	<StatusBar />
 
 	<div class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-8 py-10">
-		<header class="flex items-center gap-5">
+		<header class="flex items-center gap-5" use:fadeIn>
 			<Face expression="neutral" class="h-14 w-24 shrink-0" />
 			<div>
 				<h1 class="text-2xl font-semibold tracking-tight">AT Bots</h1>
@@ -59,7 +60,7 @@
 			</div>
 		</header>
 
-		<div class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+		<div class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" use:staggerIn>
 			{#each modes as mode (mode.href)}
 				<ModeTile
 					href={mode.href}
@@ -71,7 +72,7 @@
 			{/each}
 		</div>
 
-		<p class="text-muted-foreground text-center text-xs">
+		<p class="text-muted-foreground text-center text-xs" use:fadeIn={{ delay: 0.25 }}>
 			Touch a mode to begin · Please use with adult supervision
 		</p>
 	</div>

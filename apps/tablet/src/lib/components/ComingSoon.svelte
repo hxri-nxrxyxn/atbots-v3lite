@@ -4,6 +4,7 @@
 	import type { Component } from 'svelte';
 
 	import { Button } from '$lib/components/ui/button';
+	import { fadeIn } from '$lib/motion';
 
 	let { title, description, icon }: { title: string; description: string; icon: Component } =
 		$props();
@@ -12,7 +13,10 @@
 </script>
 
 <div class="flex min-h-dvh flex-col items-center justify-center px-8">
-	<div class="border-border bg-card/40 w-full max-w-md rounded-xl border p-8 text-center">
+	<div
+		class="border-border bg-card/40 w-full max-w-md rounded-xl border p-8 text-center"
+		use:fadeIn={{ scale: 0.98 }}
+	>
 		<div
 			class="bg-muted text-foreground/80 mx-auto flex size-12 items-center justify-center rounded-lg"
 		>

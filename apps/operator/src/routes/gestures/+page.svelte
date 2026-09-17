@@ -4,6 +4,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import UnlockGate from '$lib/components/UnlockGate.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { staggerIn } from '$lib/motion';
 	import { robot } from '$lib/state/robot.svelte';
 
 	const sequences = ['wave', 'dance_1'];
@@ -17,7 +18,7 @@
 	<PageHeader title="Gestures" subtitle="Expressions and motion sequences" />
 
 	<UnlockGate title="Gestures locked">
-		<div class="mx-auto w-full max-w-3xl space-y-8 px-6 py-8">
+		<div class="mx-auto w-full max-w-3xl space-y-8 px-6 py-8" use:staggerIn>
 			<section>
 				<h2 class="text-muted-foreground text-xs font-medium tracking-[0.15em] uppercase">
 					Expressions

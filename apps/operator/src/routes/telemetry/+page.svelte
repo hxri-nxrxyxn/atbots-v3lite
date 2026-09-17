@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import { staggerIn } from '$lib/motion';
 	import { robot } from '$lib/state/robot.svelte';
 
 	const telemetry = $derived(robot.telemetry);
@@ -21,7 +22,7 @@
 <div class="flex min-h-dvh flex-col">
 	<PageHeader title="Telemetry" subtitle="Live robot state and events" />
 
-	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8">
+	<div class="mx-auto w-full max-w-2xl space-y-6 px-6 py-8" use:staggerIn>
 		<section class="border-border bg-card/40 rounded-xl border p-6">
 			<h2 class="text-sm font-medium">State</h2>
 			{#if rows.length === 0}

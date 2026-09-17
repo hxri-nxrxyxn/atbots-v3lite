@@ -14,6 +14,7 @@
 	import type { Component } from 'svelte';
 
 	import ModeTile from '$lib/components/ModeTile.svelte';
+	import { fadeIn, staggerIn } from '$lib/motion';
 
 	interface Mode {
 		href: Pathname;
@@ -65,7 +66,7 @@
 </svelte:head>
 
 <div class="flex min-h-dvh flex-col">
-	<header class="border-border/70 flex items-center justify-between border-b px-6 py-4">
+	<header class="border-border/70 flex items-center justify-between border-b px-6 py-4" use:fadeIn>
 		<div class="flex items-center gap-3">
 			<div class="bg-brand/15 text-brand flex size-8 items-center justify-center rounded-md">
 				<Bot class="size-4" />
@@ -86,7 +87,7 @@
 			<p class="text-muted-foreground mt-1 text-sm">
 				Works on the robot's network, with no internet.
 			</p>
-			<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" use:staggerIn>
 				{#each local as mode (mode.href)}
 					<ModeTile
 						href={mode.href}
@@ -106,7 +107,7 @@
 			<p class="text-muted-foreground mt-1 text-sm">
 				Fleet, content, credits and sessions from the backend.
 			</p>
-			<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" use:staggerIn>
 				{#each cloud as mode (mode.href)}
 					<ModeTile
 						href={mode.href}

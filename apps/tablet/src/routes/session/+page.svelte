@@ -6,6 +6,7 @@
 	import Face from '$lib/face/Face.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { fadeIn, itemIn } from '$lib/motion';
 	import { session, type SessionPhase } from '$lib/state/session.svelte';
 	import { cn } from '$lib/utils';
 
@@ -92,7 +93,7 @@
 	</header>
 
 	<div class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 overflow-hidden px-6 py-6">
-		<div class="flex justify-center">
+		<div class="flex justify-center" use:fadeIn={{ scale: 0.96, duration: 0.6 }}>
 			<Face expression={faceExpression} speaking={session.phase === 'speaking'} class="h-40 w-72" />
 		</div>
 
@@ -105,7 +106,10 @@
 			{/if}
 
 			{#each session.messages as message (message.id)}
-				<div class={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}>
+				<div
+					class={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}
+					use:itemIn
+				>
 					<div
 						class={cn(
 							'max-w-[80%] rounded-lg px-4 py-2.5 text-sm leading-relaxed',
