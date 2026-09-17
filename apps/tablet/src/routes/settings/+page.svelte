@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { ArrowLeft, RefreshCw, Volume2 } from '@lucide/svelte';
+	import { ArrowLeft, RefreshCw, RotateCcw, Volume2 } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { staggerIn } from '$lib/motion';
+	import { onboarding } from '$lib/state/onboarding.svelte';
 	import { robot } from '$lib/state/robot.svelte';
 	import { session } from '$lib/state/session.svelte';
 
@@ -149,6 +150,27 @@
 				<Button variant="outline" onclick={() => session.testVoice()}>
 					<Volume2 class="size-4" />
 					Test voice
+				</Button>
+			</div>
+		</section>
+		<section class="border-border bg-card/40 rounded-xl border p-6">
+			<h2 class="text-sm font-medium">Commissioning & Provisioning</h2>
+			<p class="text-muted-foreground mt-1 text-xs">
+				Reset onboarding status to re-run the initial setup wizard.
+			</p>
+			<div class="mt-4 flex items-center justify-between">
+				<div class="text-xs text-muted-foreground font-mono">
+					Tenant: {onboarding.tenantCode} · Name: {onboarding.robotName}
+				</div>
+				<Button
+					variant="outline"
+					size="sm"
+					class="gap-1.5"
+					href={resolve('/onboarding')}
+					onclick={() => onboarding.reset()}
+				>
+					<RotateCcw class="size-3.5" />
+					Re-run Onboarding
 				</Button>
 			</div>
 		</section>

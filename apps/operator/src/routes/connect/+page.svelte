@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { RefreshCw } from '@lucide/svelte';
 
+	import NumericInput from '$lib/components/NumericInput.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -105,21 +106,17 @@
 					<Button variant="outline" onclick={() => auth.lock()}>Lock</Button>
 				</div>
 			{:else}
-				<form class="mt-4 flex items-end gap-2" onsubmit={submitPin}>
-					<label class="flex-1">
-						<span class="text-muted-foreground mb-1.5 block text-xs">6-digit PIN</span>
-						<Input
-							bind:value={pin}
-							maxlength={6}
-							placeholder="123456"
-							class="font-mono tracking-[0.3em]"
-						/>
-					</label>
-					<Button type="submit">Unlock</Button>
+				<form class="mt-4 space-y-4" onsubmit={submitPin}>
+					<NumericInput
+						label="6-digit PIN"
+						bind:value={pin}
+						maxlength={6}
+						placeholder="123456"
+						error={auth.error}
+						onComplete={() => auth.tryUnlock(pin)}
+					/>
+					<Button type="submit" class="w-full">Unlock Controls</Button>
 				</form>
-				{#if auth.error}
-					<p class="text-destructive mt-2 text-xs">{auth.error}</p>
-				{/if}
 			{/if}
 		</section>
 	</div>
