@@ -4,9 +4,9 @@
 	import { onMount } from 'svelte';
 
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import VirtualInput from '$lib/components/VirtualInput.svelte';
 	import Face from '$lib/face/Face.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
 	import { fadeIn, itemIn } from '$lib/motion';
 	import { session, type SessionPhase } from '$lib/state/session.svelte';
 	import { cn } from '$lib/utils';
@@ -49,8 +49,8 @@
 		if (transcriptEl) transcriptEl.scrollTop = transcriptEl.scrollHeight;
 	});
 
-	function submit(event: SubmitEvent) {
-		event.preventDefault();
+	function submit(event?: SubmitEvent) {
+		if (event) event.preventDefault();
 		session.sendText(draft);
 		draft = '';
 	}
@@ -65,7 +65,11 @@
 </svelte:head>
 
 <div class="flex h-full flex-col">
-	<PageHeader title="Conversation" subtitle="Visitor natural language session">
+	<PageHeader
+		title="Conversation"
+		subtitle="Visitor natural language session"
+		backHref={resolve('/')}
+	>
 		{#snippet actions()}
 			<div class="flex items-center gap-3">
 				<span class="text-muted-foreground flex items-center gap-2 text-xs font-mono">
@@ -113,7 +117,7 @@
 		>
 			{#if session.messages.length === 0}
 				<p class="text-muted-foreground text-sm text-center py-8 font-mono">
-					Say hello or select a quick question below to begin.
+					Say hello or tap a quick question below to begin.
 				</p>
 			{/if}
 
@@ -155,7 +159,16 @@
 			</div>
 
 			<form class="flex items-center gap-2" onsubmit={submit}>
-				<Input bind:value={draft} placeholder="Type a message or speak..." class="h-12 flex-1" />
+				<div class="flex-1">
+					<VirtualInput
+						bind:value={draft}
+						mode="alphanumeric"
+						placeholder="Type a message or question..."
+						maxlength={120}
+						onComplete={() => submit()}
+					/>
+				</div>
+
 				<Button
 					type="button"
 					variant="outline"
@@ -163,12 +176,21 @@
 					disabled={!session.micAvailable}
 					aria-pressed={session.listening}
 					aria-label="Use microphone"
-					class={session.listening ? 'border-brand text-brand ring-2 ring-brand/30' : ''}
+					class={cn(
+						'size-11 shrink-0',
+						session.listening && 'border-brand text-brand ring-2 ring-brand/30'
+					)}
 					onclick={() => session.toggleListening()}
 				>
 					<Mic class="size-4" />
 				</Button>
-				<Button type="submit" size="icon-lg" disabled={!draft.trim()} aria-label="Send message">
+				<Button
+					type="submit"
+					size="icon-lg"
+					class="size-11 shrink-0"
+					disabled={!draft.trim()}
+					aria-label="Send message"
+				>
 					<Send class="size-4" />
 				</Button>
 			</form>

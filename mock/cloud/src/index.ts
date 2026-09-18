@@ -4,11 +4,43 @@
  *   http://localhost:8787/v1/...      fleet, credits, content, sessions
  *   ws://localhost:8787/v1/session    AI session relay (mock or real provider)
  *
- * The AI provider is chosen with AI_PROVIDER (`mock` by default).
+ * The AI provider is chosen with AI_PROVIDER (`mock` / `gemini` / `openai`).
  */
 
 import { randomUUID } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { resolve as pathResolve } from 'node:path';
+
+// Auto-load local environment variables from .env.local or .env if present
+function loadEnv() {
+	for (const filename of ['.env.local', '.env']) {
+		const fullPath = pathResolve(process.cwd(), filename);
+		if (existsSync(fullPath)) {
+			try {
+				const content = readFileSync(fullPath, 'utf-8');
+				for (const line of content.split('\n')) {
+					const trimmed = line.trim();
+					if (!trimmed || trimmed.startsWith('#')) continue;
+					const idx = trimmed.indexOf('=');
+					if (idx > 0) {
+						const key = trimmed.slice(0, idx).trim();
+						const val = trimmed
+							.slice(idx + 1)
+							.trim()
+							.replace(/^["']|["']$/g, '');
+						if (!process.env[key]) {
+							process.env[key] = val;
+						}
+					}
+				}
+			} catch {
+				// Ignore
+			}
+		}
+	}
+}
+loadEnv();
 
 import {
 	MOCK_CLOUD_PORT,
