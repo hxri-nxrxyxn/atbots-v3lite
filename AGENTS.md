@@ -2,9 +2,9 @@
 
 ## Repo status
 
-- Monorepo (M1): `apps/tablet` / `apps/operator` (SvelteKit SPAs); `packages/protocol`
+- Monorepo: `apps/tablet` / `apps/operator` (SvelteKit SPAs); `packages/protocol`
   and `packages/link`; `mock/esp` and `mock/cloud` (Node simulators); `firmware/esp8266`
-  (working bench prototype). No git or CI yet.
+  (working bench prototype). Remote: `github.com/hxri-nxrxyxn/atbots-v3lite`.
 - The design doc lives at `docs/AT_Bots_V3_Lite_Master_Technical_Design_Document.md`.
 
 ## Commands

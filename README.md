@@ -110,4 +110,4 @@ board has ~25–30 KB free RAM, so keep firmware code small.
 ## Not in this build
 
 Android/Capacitor packaging, native plugins, BLE, real speech-to-text or LLMs,
-servos, OTA, secure boot, metering/ledger, RAG, vision, and non-stub quizzes/games.
+servos, OTA, secure boot, metering/ledger, RAG, and vision.
