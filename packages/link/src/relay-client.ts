@@ -12,6 +12,7 @@ export class RelayClient {
 	#status: LinkStatus = 'idle';
 	#ws: WebSocket | null = null;
 	#sessionId: string | null = null;
+	#queue: RelayClientMessage[] = [];
 
 	#messageHandlers = new Set<(message: RelayServerMessage) => void>();
 	#statusHandlers = new Set<(status: LinkStatus) => void>();
@@ -39,7 +40,12 @@ export class RelayClient {
 		const ws = new this.#WebSocketImpl(this.#url);
 		this.#ws = ws;
 
-		ws.onopen = () => this.#setStatus('open');
+		ws.onopen = () => {
+			this.#setStatus('open');
+			for (const message of this.#queue.splice(0)) {
+				ws.send(JSON.stringify(message));
+			}
+		};
 		ws.onerror = () => this.#setStatus('error');
 		ws.onclose = () => {
 			this.#ws = null;
@@ -92,6 +98,8 @@ export class RelayClient {
 	#send(message: RelayClientMessage): void {
 		if (this.#ws && this.#status === 'open') {
 			this.#ws.send(JSON.stringify(message));
+		} else {
+			this.#queue.push(message);
 		}
 	}
 
