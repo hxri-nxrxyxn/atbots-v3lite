@@ -77,7 +77,7 @@ packages/protocol              message shapes, type guards, constants — single
 packages/link                  EspLink (WS) + MockEspLink + CloudClient
 mock/esp, mock/cloud           Node simulators
 firmware/esp8266               MicroPython
-docs/                          design doc, protocol.md, runbook.md
+docs/                          design doc, protocol.md, runbook.md, srs.md
 ```
 
 - `packages/*` export TypeScript source directly (`exports: "./src/index.ts"`); there is no

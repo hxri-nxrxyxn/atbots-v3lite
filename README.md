@@ -20,7 +20,7 @@ treat that as product context, not the build contract. See
 | `mock/esp` | Node WebSocket robot simulator (`:8765`) |
 | `mock/cloud` | Node HTTP + WebSocket relay/API stub with a swappable AI provider (`:8787`) |
 | `firmware/esp8266` | MicroPython bench prototype: Wi-Fi + WebSocket + drive + telemetry |
-| `docs/` | Design document and [`protocol.md`](docs/protocol.md) |
+| `docs/` | Design document, [`protocol.md`](docs/protocol.md), and [`srs.md`](docs/srs.md) |
 
 ## Requirements
 
