@@ -66,17 +66,14 @@
 </svelte:head>
 
 <div class="flex min-h-dvh flex-col">
-	<header class="border-border/70 flex items-center justify-between border-b px-6 py-4" use:fadeIn>
+	<header
+		class="border-border/70 flex items-center justify-between border-b px-6 py-3.5"
+		use:fadeIn
+	>
 		<div class="flex items-center gap-3">
-			<div class="bg-brand/15 text-brand flex size-8 items-center justify-center rounded-md">
-				<Bot class="size-4" />
-			</div>
-			<div>
-				<div class="text-sm leading-none font-medium">AT Bots</div>
-				<div class="text-muted-foreground mt-1 text-xs">Operator console</div>
-			</div>
+			<img src="/atbots-logo.png" alt="AT Bots" class="h-7 w-auto object-contain" />
 		</div>
-		<span class="text-muted-foreground text-xs">Local + Cloud</span>
+		<span class="text-muted-foreground text-xs font-mono">Local + Cloud Console</span>
 	</header>
 
 	<div class="mx-auto w-full max-w-5xl flex-1 space-y-10 px-6 py-8">

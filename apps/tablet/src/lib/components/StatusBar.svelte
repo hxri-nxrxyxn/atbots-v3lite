@@ -24,9 +24,7 @@
 	class="border-border/70 flex h-14 shrink-0 items-center justify-between border-b px-6 bg-background/95 backdrop-blur-sm select-none"
 >
 	<div class="flex items-center gap-3">
-		<span class="text-xs font-semibold tracking-tight text-foreground font-mono">
-			AT Bots V3 Lite
-		</span>
+		<img src="/atbots-logo.png" alt="AT Bots" class="h-6 w-auto object-contain" />
 	</div>
 
 	<div class="flex items-center gap-4">

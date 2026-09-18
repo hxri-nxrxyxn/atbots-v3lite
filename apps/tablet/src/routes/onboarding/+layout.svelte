@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { Bot, ShieldCheck } from '@lucide/svelte';
+	import { ShieldCheck } from '@lucide/svelte';
 	import KeyboardDock from '$lib/components/KeyboardDock.svelte';
 
 	let { children }: { children: Snippet } = $props();
@@ -8,20 +8,14 @@
 
 <div class="bg-background text-foreground flex min-h-dvh flex-col">
 	<!-- Dedicated Clean Onboarding Top Header -->
-	<header class="border-border/60 flex items-center justify-between border-b px-8 py-5">
+	<header class="border-border/60 flex items-center justify-between border-b px-8 py-4">
 		<div class="flex items-center gap-3">
-			<div class="bg-brand/15 text-brand flex size-8 items-center justify-center rounded-lg">
-				<Bot class="size-4" />
-			</div>
-			<div>
-				<span class="text-xs font-semibold font-mono block"> AT Bots V3 Lite </span>
-				<span class="text-muted-foreground text-xs">Commissioning & Provisioning</span>
-			</div>
+			<img src="/atbots-logo.png" alt="AT Bots" class="h-7 w-auto object-contain" />
 		</div>
 
 		<div class="flex items-center gap-2 text-xs font-mono text-muted-foreground">
 			<ShieldCheck class="size-4 text-brand" />
-			<span>System Provisioning Setup</span>
+			<span>Commissioning & Provisioning</span>
 		</div>
 	</header>
 
