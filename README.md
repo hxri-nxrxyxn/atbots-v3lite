@@ -63,11 +63,11 @@ real board: **Settings → Robot link → ESP8266 over Wi-Fi → `ws://<board-ip
 ## How it fits together
 
 ```mermaid
-graph LR
-    TAB["Tablet app"] -->|WS :80/ws<br/>(Topic envelopes)| ESP["ESP8266 / mock-esp"]
-    OP["Operator console"] -->|WS :80/ws<br/>(Topic envelopes)| ESP
-    TAB -->|WSS relay| CLOUD["mock-cloud"]
-    OP -->|HTTPS API| CLOUD
+flowchart LR
+    TAB["Tablet app"] -->|"WS :80/ws (Topic envelopes)"| ESP["ESP8266 / mock-esp"]
+    OP["Operator console"] -->|"WS :80/ws (Topic envelopes)"| ESP
+    TAB -->|"WSS relay"| CLOUD["mock-cloud"]
+    OP -->|"HTTPS API"| CLOUD
 ```
 
 - **Topic & Payload Envelopes over WebSocket.** The ESP is the local hub; both apps connect to it using standardized topics (`cmd/drive`, `telemetry`, `event/say`).
