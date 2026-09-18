@@ -50,7 +50,7 @@ export class GeminiProvider implements AIProvider {
 				systemInstruction,
 				generationConfig: {
 					temperature: 0.7,
-					maxOutputTokens: 200
+					maxOutputTokens: 2048
 				}
 			})
 		});
@@ -68,7 +68,13 @@ export class GeminiProvider implements AIProvider {
 			}>;
 		};
 
-		const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+		console.log('RAW GEMINI RESP:', JSON.stringify(data, null, 2));
+
+		const parts = data.candidates?.[0]?.content?.parts ?? [];
+		const text = parts
+			.map((p) => p.text ?? '')
+			.join('')
+			.trim();
 		if (!text) {
 			throw new Error('Gemini returned empty response');
 		}
