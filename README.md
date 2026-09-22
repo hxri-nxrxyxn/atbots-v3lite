@@ -1,5 +1,9 @@
 # AT Bots V3 Lite
 
+![AT Bots V3 Lite — Visitor Tablet Interface](docs/assets/v3lite-ui-mockup-1.png)
+
+![AT Bots V3 Lite — Operator Console & Telemetry](docs/assets/v3lite-ui-mockup-2.png)
+
 A working demo of the AT Bots V3 Lite interactive assistant: a visitor-facing tablet
 app, an operator console, and a robot control channel — connected over a local
 JSON/WebSocket protocol.
