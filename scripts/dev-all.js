@@ -4,13 +4,28 @@
 import { spawn } from 'node:child_process';
 
 const services = [
-	{ name: 'cloud', cmd: 'npm', args: ['-w', '@atbots/mock-cloud', 'run', 'dev'], color: '\x1b[36m' },
+	{
+		name: 'cloud',
+		cmd: 'npm',
+		args: ['-w', '@atbots/mock-cloud', 'run', 'dev'],
+		color: '\x1b[36m'
+	},
 	{ name: 'esp', cmd: 'npm', args: ['-w', '@atbots/mock-esp', 'run', 'dev'], color: '\x1b[35m' },
-	{ name: 'tablet', cmd: 'npm', args: ['-w', '@atbots/tablet', 'run', 'dev', '--', '--port', '5173'], color: '\x1b[32m' },
-	{ name: 'operator', cmd: 'npm', args: ['-w', '@atbots/operator', 'run', 'dev', '--', '--port', '5174'], color: '\x1b[33m' }
+	{
+		name: 'tablet',
+		cmd: 'npm',
+		args: ['-w', '@atbots/tablet', 'run', 'dev', '--', '--port', '5173'],
+		color: '\x1b[32m'
+	},
+	{
+		name: 'operator',
+		cmd: 'npm',
+		args: ['-w', '@atbots/operator', 'run', 'dev', '--', '--port', '5174'],
+		color: '\x1b[33m'
+	}
 ];
 
-const children: ReturnType<typeof spawn>[] = [];
+const children = [];
 
 for (const { name, cmd, args, color } of services) {
 	const child = spawn(cmd, args, { stdio: ['inherit', 'pipe', 'pipe'], shell: true });
